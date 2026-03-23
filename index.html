@@ -20,6 +20,26 @@
 <body>
           <!-- 只放 UI -->
   <div id="ar-viewport">
+    <div id="click-to-start" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black; /* 背景設為黑色，突顯圖片 */
+    z-index: 10000; /* 確保它在最上層 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.5s ease; /* 增加淡出效果，比較美觀 */
+">
+    <img src="start-button.png" alt="點擊開始體驗" style="
+        max-width: 80%; /* 限制圖片最大寬度，避免在手機上太大 */
+        max-height: 80%; /* 限制圖片最大高度 */
+        object-fit: contain; /* 確保圖片不變形 */
+    ">
+</div>
     <!-- ===============================
          INTRO 1（待機動畫）
     =============================== -->

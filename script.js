@@ -204,24 +204,23 @@ function showTypewriterScreen() {
 // INTRO 影片流程
 // ===============================
 
-
 function playFullIntroOnce() {
-
   introPhase = "full";
   introVideo.loop = false;
-  introVideo.muted = true;  
+  introVideo.muted = false; // 1. 這裡改為 false，準備播放聲音
   introVideo.currentTime = 0;
-  introVideo.play().catch(()=>{});
+  
+  // 嘗試播放
+  introVideo.play().catch((err) => {
+    console.log("自動播放被攔截，等待使用者點擊...");
+    showStartButton(); // 如果被瀏覽器擋住，就顯示按鈕
+  });
 
   introVideo.onended = () => {
     introVideo.onended = null;
     showTypewriterScreen();
   };
 }
-
-
-
-
 
 
 // ===============================
@@ -575,26 +574,79 @@ function stopHandsCamera() {
     handsVideo.srcObject = null;
   }
 }
-
-
-
 // ===============================
-// INIT
+// INIT - 初始化與聲音解鎖
 // ===============================
 window.addEventListener("DOMContentLoaded", () => {
-
   hideAll();
 
+  // 1. 預設隱藏 AR 畫面，顯示 Intro 影片容器
   cameraFade?.classList.remove("show");
   cameraFade && (cameraFade.style.display = "none");
-
   arScene.style.display = "none";
   introContainer.style.display = "block";
 
-  blackoutOff();   // 預設不覆蓋畫面
+  // 2. 確保在 INIT 時黑幕退掉
+  blackoutOff(); 
 
-  playFullIntroOnce();
+  // --- 聲音解鎖邏輯 ---
 
+  const startOverlay = document.getElementById("click-to-start");
 
-  console.log("✅ script ready（傳真洗出 + 黑幕穩定版）");
+  // 封裝解鎖與播放的邏輯
+  function unlockAndPlay() {
+    if (!startOverlay) return; // 防止重複執行
+    
+    console.log("🔊 聲音已解鎖，開始播放影片");
+
+    // 淡出並移除啟動遮罩
+    startOverlay.style.opacity = "0";
+    setTimeout(() => {
+        startOverlay.remove(); // 徹底從 DOM 中移除
+    }, 500); // 與 CSS transition 時間一致
+
+    // 關鍵：在使用者互動事件內取消靜音並播放
+    const introVideo = document.getElementById("intro-video");
+    if (introVideo) {
+        introVideo.muted = false; // 取消靜音
+        
+        // 嘗試播放，並處理潛在的錯誤
+        const playPromise = introVideo.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // 播放成功
+                console.log("影片開始播放 (有聲音)");
+            }).catch(error => {
+                // 播放失敗 (例如瀏覽器仍攔截)
+                console.error("影片播放失敗:", error);
+                // 這裡可以加入後備邏輯，例如顯示一個小的播放按鈕
+            });
+        }
+    }
+
+    // 預先解鎖其他音效 (防止後續音效也沒聲音)
+    const scanMusic = document.getElementById("scan-music");
+    const faxSound = document.getElementById("fax-sound");
+    [scanMusic, faxSound].forEach(p => {
+        if (p) {
+            // 快速播放後暫停，解鎖音訊上下文
+            p.play().then(() => p.pause()).catch(() => {});
+        }
+    });
+
+    // 呼叫原本的 intro 流程 (確保 loop: false 和 onended 事件正確設定)
+    playFullIntroOnce();
+  }
+
+  // A. 監聽點擊事件
+  startOverlay.addEventListener("click", unlockAndPlay, { once: true });
+
+  // B. 監聽按鍵事件 (Enter 鍵)
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        unlockAndPlay();
+    }
+  }, { once: true }); // ensure it only happens once
+
+  console.log("✅ script ready（等待使用者點擊圖片或按 Enter 開啟聲音）");
 });
