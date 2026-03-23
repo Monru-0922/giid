@@ -279,11 +279,13 @@ html, body {
 /* ===============================
    掃描畫面：倒數 + 橫桿（疊在 04 上）
 =============================== */
+/* 確保掃描層可以顯示 */
 #scan-overlay {
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 16;
+  position: absolute;
+  inset: 0;
+  display: none; /* 由 JS 控制顯示 */
+  z-index: 1000; /* 提高層級，確保在所有 UI 之上 */
+  background: rgba(0, 0, 0, 0.1); /* 稍微有點暗色背景 */
   pointer-events: none;
 }
 
@@ -293,77 +295,64 @@ html, body {
   object-fit: contain;
 }
 
-
-
-
-/* 上下掃描的橫桿 */
-#scan-light-h {
+#face-lock-container {
   position: absolute;
-  top: 50%;
-  left: -100%;
-  width: 5%;  
-  height: 200%; 
-  transform: translateY(-50%); /* 從畫面左外側開始 */                     
-  pointer-events: none;
-  animation: scanH 4s linear infinite alternate;
-  z-index: 30;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
 }
 
-
-#scan-light-v {
+#face-rect {
   position: absolute;
-  left: 50%;
-  top: -100%;
-  transform: translateX(-50%);  /* 從畫面上外側開始 */
-  height: 10%;                       /* 拉滿高度 */
-  width:auto;
-  animation: scanV 4s linear infinite alternate;
-  z-index: 30;
+  border: 1px solid #ff0000; /* 強調紅框實線 */
+  width: 500px;
+  height: 500px;
+  display: none; /* JS 會把它改成 block */
+
 }
 
-
-#scan-popup {
+#random-data {
   position: absolute;
-  width: 10%;          /* 👈 改這裡調大小 */
-  max-width: 100px;    /* 防止太大 */
-  z-index: 10;
-}/* 水平：由左 → 右 → 左 */
-@keyframes scanH {
-  from {
-    left: -100%;
-  }
-  to {
-    left: 100%;
-  }
+  top: -35px;
+  left: 0;
+  text-align: center;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 24px; /* 字體放大 */
+  font-weight: lighter;
+  letter-spacing: 2px;
+  white-space: nowrap; /* 強制不折行 */
 }
 
-/* 垂直：由上 → 下 → 上 */
-@keyframes scanV {
-  from {
-    top: -100%;
-  }
-  to {
-    top: 100%;
-  }
+/* 畫面背景閃現 (全螢幕) */
+.glitch-active {
+  animation: bg-flash 0.5s infinite;
 }
-/* 掃描畫面 5-4-3-2-1 倒數 */
-#scan-countdown {
+
+@keyframes bg-flash {
+  0% { background: rgba(255, 255, 255, 0); }
+  100% { background:black; }
+  0% { background: rgba(255, 255, 255, 0.05); }
+}
+
+#scan-line-h {
   position: absolute;
-  top: 170px;              /* 放在方框上方 */
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 100px;
-  font-weight: 300;
-  color: #ffffff;
-  letter-spacing: 6px;
-  text-shadow: 0 0 6px rgba(0,0,0,.7);
-  z-index: 60;             /* 🔥 一定要高於 scan-bg 與光線 */
-  pointer-events: none;
-
-  font-family: -apple-system, "PingFang TC", "PingFangTC-Regular",
-               "Noto Sans TC", "Helvetica Neue", Arial, sans-serif;
+  left: 0;
+  width: 100%;
+  height: 1px; /* 1px 細線 */
+  background: #ff0000;
+  box-shadow: 0 0 5px #ff0000; /* 增加發光 */
+  z-index: 90;
 }
 
+#scan-line-v {
+  position: absolute;
+  top: 0;
+  width: 1px; /* 1px 細線 */
+  height: 100%;
+  background: #ff0000;
+  box-shadow: 0 0 5px #ff0000; /* 增加發光 */
+  z-index: 90;
+}
 /* 濾鏡階段中央倒數 */
 #mk-countdown {
   position: absolute;

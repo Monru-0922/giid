@@ -195,7 +195,7 @@ function showTypewriterScreen() {
 
     playTVOff(typeScreen, () => enterAR());
 
-  }, 13000);
+  }, 8000);
 }
 
 
@@ -254,43 +254,92 @@ function enterAR() {
 // ===============================
 // 掃描倒數
 // ===============================
+
+let faceInterval;
+let scanLineInterval;
+let scanTimer;
+
 function startScanSequence() {
+  console.log("開始 15 秒掃描序列...");
+  
   const scanMusic = document.getElementById("scan-music");
   if (scanMusic) {
     scanMusic.currentTime = 0;
-    scanMusic.volume = 0.05;   // 可自行調整
+    scanMusic.volume = 0.2;
     scanMusic.play().catch(()=>{});
   }
   
-  overlayStep = 1;
-  scanOverlay.style.display = "flex";
-  let count = 10;
-  scanCountdown.textContent = count;
-  scanCountdown.style.display = "block";
-  const t = setInterval(() => {
+  const scanOverlay = $("#scan-overlay");
+  const faceRect = $("#face-rect");
+  const randomData = $("#random-data");
+  const scanCountdown = $("#scan-countdown");
+  const lineH = $("#scan-line-h");
+  const lineV = $("#scan-line-v");
 
-    count--;
+  // 1. 顯示外層
+  scanOverlay.style.display = "block";
+  scanOverlay.classList.add("glitch-active");
 
-    if (count > 0) {
-      scanCountdown.textContent = count;
-      return;
+  // 2. 紅框與長數字隨機跳動 (每 0.15 秒)
+  clearInterval(faceInterval);
+  faceInterval = setInterval(() => {
+    const maxX = 1080 - 300;
+    const maxY = 1920 - 350;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+
+    faceRect.style.left = x + "px";
+    faceRect.style.top = y + "px";
+    faceRect.style.display = "block";
+
+    // 生成更長的隨機碼 (例如: 8A2F9B10-C2E4)
+    const p1 = Math.floor(Math.random() * 0xffffffff).toString(16).padEnd(8, '0');
+    const p2 = Math.floor(Math.random() * 0xffff).toString(16).padEnd(4, '0');
+    randomData.textContent = `${p1}-${p2}`.toUpperCase();
+  }, 150);
+
+  // 3. 兩條 1px 紅色細線交集掃描 (每 0.03 秒更新位置)
+  clearInterval(scanLineInterval);
+  scanLineInterval = setInterval(() => {
+    const time = performance.now() * 0.002;
+    // 水平線上下跑
+    const yH = (Math.sin(time) * 0.5 + 0.5) * 1920;
+    lineH.style.top = yH + "px";
+    // 垂直線左右跑 (速度稍快一點點作區隔)
+    const xV = (Math.cos(time * 0.8) * 0.5 + 0.5) * 1080;
+    lineV.style.left = xV + "px";
+  }, 30);
+
+  // 4. 強制 15 秒自動跳轉邏輯
+  let timeLeft = 5; // 設定為 15 秒
+  scanCountdown.textContent = timeLeft;
+  
+  clearInterval(scanTimer);
+  scanTimer = setInterval(() => {
+    timeLeft--;
+    
+    if (timeLeft <= 0) {
+      // 停止所有計時器
+      clearInterval(scanTimer);
+      clearInterval(faceInterval);
+      clearInterval(scanLineInterval);
+      
+      // 隱藏掃描層
+      scanOverlay.style.display = "none";
+      scanOverlay.classList.remove("glitch-active");
+      
+      if (scanMusic) {
+        scanMusic.pause();
+        scanMusic.currentTime = 0;
+      }
+
+      console.log("15秒時間到，自動跳轉...");
+      showPreRatingTypewriter(); // 執行下一個動作
+    } else {
+      scanCountdown.textContent = timeLeft;
     }
-
-    clearInterval(t);
-    const scanMusic = document.getElementById("scan-music");
-if (scanMusic) {
-  scanMusic.pause();
-  scanMusic.currentTime = 0;
+  }, 1000); // 每一秒跑一次
 }
-
-    scanCountdown.style.display = "none";
-    showPreRatingTypewriter();
-
-  }, 1500);
-}
-
-
-
 // ===============================
 // 第二段 打字機
 // ===============================
@@ -328,53 +377,51 @@ function startTypewriter2() {
   }, 45);
 }
 
-
 function showPreRatingTypewriter() {
+  console.log("進入 showPreRatingTypewriter...");
 
-  scanOverlay.style.display = "none";
+  // ✅ 修正點：在這裡重新獲取 DOM，或者直接用 $("#scan-overlay")
+  const scanOverlay = document.getElementById("scan-overlay");
+  if (scanOverlay) scanOverlay.style.display = "none";
 
+  // 確保畫面乾淨
+  hideAll();
+
+  // 播放電視開啟效果
   playTVOpen(type2Screen);
-startTypewriter2();
+  startTypewriter2();
 
-/* ⭐ 第二次 loading 設定 */
-const box2  = document.getElementById("loading2-box");
-const bar2  = document.getElementById("progress2-bar");
-const text2 = document.getElementById("progress2-text");
+  /* ⭐ 第二次 loading 設定 */
+  const box2  = document.getElementById("loading2-box");
+  const bar2  = document.getElementById("progress2-bar");
+  const text2 = document.getElementById("progress2-text");
 
-if (box2 && bar2 && text2) {
-  box2.style.display = "block";
-  bar2.style.width = "0%";
-  text2.textContent = "0%";
+  if (box2 && bar2 && text2) {
+    box2.style.display = "block";
+    bar2.style.width = "0%";
+    text2.textContent = "0%";
 
-  let p = 0;
-  const t = setInterval(() => {
-    p++;
-    bar2.style.width = p + "%";
-    text2.textContent = p + "%";
-    if (p >= 30) clearInterval(t);
-  }, 120);
-}
+    let p = 0;
+    const t = setInterval(() => {
+      p++;
+      bar2.style.width = p + "%";
+      text2.textContent = p + "%";
+      if (p >= 30) clearInterval(t);
+    }, 120);
+  }
 
+  // 設定 20 秒後關閉打字機並顯示評分表
   setTimeout(() => {
-
+    console.log("打字機時間結束，準備顯示評分表...");
     playTVOff(type2Screen, () => {
-
-      // 轉場時短暫遮罩
       blackoutOn();
 
       setTimeout(() => {
-
-        // 顯示 05
         ratingOverlay.style.display = "flex";
-
-        // 重置動畫
         ratingOverlay.classList.remove("fax-print");
         void ratingOverlay.offsetWidth;
-
-        // 套用：上到下洗出 ＋ 微卡頓
         ratingOverlay.classList.add("fax-print");
 
-        // 播放影印聲音
         const faxSound = document.getElementById("fax-sound");
         if (faxSound) {
           faxSound.currentTime = 0;
@@ -382,25 +429,19 @@ if (box2 && bar2 && text2) {
           faxSound.play().catch(()=>{});
         }
 
-        // 顯影開始 → 退黑幕
         setTimeout(() => blackoutOff(), 200);
-
         overlayStep = 2;
 
-        // 05 → 06 popup
-        // 05 → 顯示一段時間後 → 跳到 Step3.html
-// ⭐ 評分表顯示一段時間 → 前往 step3.html
-setTimeout(() => {
-  window.location.href = "step3.html";
-}, 14000);
-
+        // ⭐ 14 秒後跳轉到 step3.html
+        setTimeout(() => {
+          console.log("跳轉至 step3.html");
+          window.location.href = "step3.html";
+        }, 8000);
 
       }, 280);
     });
-
-  }, 20000);
+  }, 5000); 
 }
-
 
 
 // ===============================

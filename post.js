@@ -75,7 +75,7 @@ commentInput.addEventListener("keydown", e => {
 // ===============================
 
 // 設定倒數秒數
-let timeLeft = 15; 
+let timeLeft = 5; 
 const countdownDisplay = document.getElementById("countdown-text");
 
 const timer = setInterval(() => {
@@ -147,4 +147,4 @@ async function autoCaptureAndRedirect() {
       console.error("自動截圖錯誤:", err);
       window.location.href = "final.html";
   }
-}
+} 

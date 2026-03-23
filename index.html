@@ -85,24 +85,23 @@
     <div id="camera-fade"></div>
 
     <div id="camera-overlay">
-      <img src="image/02.png" alt="camera frame">
+      <img src="image/03.png" alt="camera frame">
       <!-- ✅ 倒數數字會由 JS 動態加在這裡（mk-countdown） -->
     </div>
 
     <!-- ===============================
          03 掃描畫面（背景 + 倒數 + 掃描線）
     =============================== -->
+  
     <div id="scan-overlay">
-      <!-- 背景沿用 02 畫面 -->
-      <img id="scan-bg" src="image/02.png" alt="scan background">
-
-      <!-- 5,4,3,2,1 倒數 -->
+      <div id="scan-line-h"></div>
+      <div id="scan-line-v"></div>
       <div id="scan-countdown"></div>
-
-      <!-- 掃描光線：水平 & 垂直（用 CSS animation 控制） -->
-      <img id="scan-light-h" src="image/light1.png" alt="scan light horizontal">
-      <img id="scan-light-v" src="image/light2.png" alt="scan light vertical">
+      <div id="face-rect">
+        <div id="random-data"></div>
+      </div>
     </div>
+   
 
     
 
