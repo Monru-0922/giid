@@ -202,7 +202,7 @@ html,body{
   /* ======================
      BGM（本頁播放）
   ====================== */
-  const bgm = new Audio("music2.mp3");
+  const bgm = new Audio("makeup_music.mp3");
   bgm.loop = false;
   bgm.volume = 0.6;
   
@@ -223,7 +223,7 @@ html,body{
   /* ======================
      上一頁拍攝畫面
   ====================== */
-  const shot = localStorage.getItem("makeup_shot") || localStorage.getItem("finalShot");
+  const shot = localStorage.getItem("capturedImage") || localStorage.getItem("photo_02");
   if (shot) {
     document.getElementById("final-shot").src = shot;
   }
@@ -252,7 +252,43 @@ html,body{
   location.href = "text.html";
 }, 10000);
 
-  </script>
+async function captureAndGo() {
+    console.log("📸 準備全畫面截圖...");
+    
+    // 1. 抓取妳的手機容器 (確認 ID 是 viewport 或是妳手機框的 ID)
+    const target = document.getElementById("viewport"); 
+    
+    try {
+        // 2. 執行截圖
+        const canvas = await html2canvas(target, {
+            width: 1080,
+            height: 1920,
+            scale: 1, // 1:1 截取，不要縮放
+            useCORS: true,
+            backgroundColor: "#000"
+        });
+
+        const finalImage = canvas.toDataURL("image/jpeg", 0.8);
+
+        // 3. 💾 存入 localStorage (一次滿足 final 頁面的圖二跟圖三)
+        localStorage.setItem("photo_02", finalImage); 
+        localStorage.setItem("photo_03", finalImage); 
+        
+        console.log("✅ 截圖存檔成功！");
+    } catch (err) {
+        console.error("截圖出錯:", err);
+    }
+
+    // 4. 停音樂並跳轉
+    if (typeof bgm !== 'undefined') bgm.pause();
+    window.location.href = "text.html";
+}
+
+/* ==========================================
+   ⏳ 統一在 10 秒（或妳想要的時間）執行
+========================================== */
+setTimeout(captureAndGo, 10000);
+</script>
   
 
 </body>

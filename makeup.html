@@ -428,7 +428,7 @@ window.addEventListener("keydown", e => {
  /* ======================
    BGM（接續上一頁）
 ====================== */
-const bgm = new Audio("music2.mp3");
+const bgm = new Audio("makeup_music.mp3");
 bgm.loop = true;
 bgm.volume = 0.6;
 
@@ -453,28 +453,62 @@ setInterval(() => {
 }, 500);
 
 /* ======================
-   20 秒倒數＋自動跳轉
+   20 秒倒數＋自動跳轉（修正版）
 ====================== */
 let timeLeft = 30;
 const cdEl = document.getElementById("countdown");
 
 cdEl.textContent = timeLeft;
 
-const timer = setInterval(() => {
+const timer = setInterval(async () => {
   timeLeft--;
   cdEl.textContent = timeLeft;
+
   if (timeLeft <= 0) {
-  clearInterval(timer);
+    clearInterval(timer);
 
-  // ✅ 存下最後一幀（已套妝的 canvas）
-  try {
-    const shot = canvas.toDataURL("image/jpeg", 0.9);
-    localStorage.setItem("makeup_shot", shot);
-  } catch(e){}
+    console.log("📸 正在執行多重截圖存檔...");
 
-  window.location.href = "step5.html";
-}
+    // 1. 建立一個合成畫布
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = 1080;
+    finalCanvas.height = 1920;
+    const fCtx = finalCanvas.getContext('2d');
 
+    // --- A. 繪製共同層 (人臉 + 美妝) ---
+    // 畫底層：攝影機畫面
+    fCtx.save();
+    fCtx.translate(1080, 0);
+    fCtx.scale(-1, 1);
+    fCtx.drawImage(video, 0, 0, 1080, 1920);
+    fCtx.restore();
+
+    // 畫中層：美妝效果
+    fCtx.drawImage(canvas, 0, 0, 1080, 1920);
+
+    // 🌟 此時畫布內容為「人臉 + 美妝」，先存給 step5 使用
+    try {
+      const faceOnlyShot = finalCanvas.toDataURL("image/jpeg", 0.7);
+      localStorage.setItem("capturedImage", faceOnlyShot);
+      console.log("✅ capturedImage (無框) 已存檔，供 step5 使用");
+    } catch(e) { console.error("capturedImage 存檔失敗", e); }
+
+    // --- B. 繼續繪製頂層 (相框) ---
+    const frameImg = document.querySelector('.frame-overlay');
+    if (frameImg && frameImg.complete) {
+      fCtx.drawImage(frameImg, 0, 0, 1080, 1920);
+    }
+
+    // 🌟 此時畫布內容為「完整畫面」，存給 final 使用
+    try {
+      const fullShot = finalCanvas.toDataURL("image/jpeg", 0.9);
+      localStorage.setItem("photo_02", fullShot);
+      console.log("✅ photo_02 (有框) 已存檔，供 final 使用");
+    } catch(e) { console.error("photo_02 存檔失敗", e); }
+
+    // 2. 跳轉
+    window.location.href = "step5.html";
+  }
 }, 1000);
 /* ======================
    第二攝影機（純顯示，不進 FaceMesh）
@@ -529,7 +563,7 @@ startCameras();
 // 建議將原本的 const cam = new Camera(...) 部分保留，
 // 但確保上面的 stream1 已經正確賦值給 video。
 
-  </script>
+</script>
   
 </body>
 </html>

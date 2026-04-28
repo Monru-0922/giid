@@ -3,74 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ending</title>
+<title>模範生 – 系統升級提示</title>
+<script src="qrcode.min.js"></script>
 
 <style>
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  background:#000;
+  margin:0; width:100%; height:100%;
+  background:#000; display:flex;
+  justify-content:center; align-items:center;
   overflow:hidden;
 }
 
-/* 與前頁一致 */
 #viewport{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:1080px;
-  height:1920px;
+  position:absolute; top:50%; left:50%;
+  width:1080px; height:1920px;
   transform:translate(-50%,-50%) scale(var(--scale-factor,1));
-  background:#000;
-  overflow:hidden;
+  overflow:hidden; background:#000;
 }
 
-video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+.bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+#type-text{
+  position:absolute; left:53%; top:48%;
+  transform:translateX(-50%); width:70%;
+  color:#ffffff; font-family:sans-serif;
+  font-size:32px; letter-spacing:5px; line-height:60px;
+  font-weight:300; white-space:pre-line;
+}
+
+/* 🟢 修改後的提示區與 QR 區 */
+#button-area {
+  position: absolute; 
+  bottom: 250px; 
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; 
+  flex-direction: column; align-items: flex-start;
+  width: 70%; 
+  gap: 80px;
+  opacity: 0; 
+  transition: opacity 1s;
+}
+
+.qr-container {
+ flex: 1; 
+ display: flex; 
+ align-items: flex-end; 
+ gap: 30px;
+ margin-left: 30px;
+}
+
+#qrcode {
+ padding: 10px; 
+ border-radius: 4px; 
+}
+#qrcode img {
+ width: 180px !important; height: 180px !important; 
+}
+.qr-info-side p { 
+ font-size: 22px; 
+ color: #ffffff; /* 🟢 改成純白，讓它在黑背景下更顯眼 */
+ margin: 0; 
+ padding-left: 24px; 
+ line-height: 1.5; 
+ opacity: 0.9;   /* 🟢 如果太亮可以加一點點透明度 */
+}
+
+.action-info {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: #fff;
+  padding: 30px 0;
+  font-size: 26px; 
+  font-weight: 300;letter-spacing: 8px; text-align: center;
+  backdrop-filter: blur(5px);
+  animation: pulse 2s infinite ease-in-out;
+  cursor: pointer;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+  50% { box-shadow: 0 0 20px rgba(255,255,255,0.4); border-color: #fff; }
+}
+
+/* 進度條定位修正 */
+#loading-box {
+    position: absolute; 
+    top: 90%; left: 50%;
+    transform: translateX(-50%); width: 60%;
 }
 </style>
 </head>
 
 <body>
-
 <div id="viewport">
- 
-    <video
-    id="endingVideo"
-    src="Animation2.mp4"
-    autoplay
-    playsinline
-    muted
-    preload="auto"
-    style="width:100%;height:100%;object-fit:cover;">
-  </video>
-  
+  <img class="bg" src="image/01.png">
 
-</video>
+  <div id="type-text"></div>
 
-  
+  <div id="loading-box" style="display:none;">
+      <div style="width:100%; height:10px; background:rgba(255,255,255,0.2); border:1px solid #fff;">
+          <div id="progress-bar" style="width:0%; height:100%; background:#fff; transition: width 0.1s;"></div>
+      </div>
+      <div id="progress-text" style="color:#fff; font-size:24px; text-align:right; margin-top:10px; font-family:monospace;">0%</div>
+      <div id="loading-text" style="color:#fff; font-size:20px; margin-top:5px; letter-spacing:2px; opacity:0.8; text-align:center;">系統數據處理中...</div>
+  </div>
+
+  <div id="button-area">
+      <div class="qr-container">
+          <div id="qrcode"></div>
+          <div class="qr-info-side">
+              <p>掃描 QR Code<br>下載本次體驗全部照片</p>
+          </div>
+      </div>
+      <div class="action-info" onclick="finish()">
+          結束體驗並返回首頁 (Enter)
+      </div>
+  </div>
 </div>
 
 <script>
-/* ======================
-   9:16 SCALE
-====================== */
-const video = document.getElementById("endingVideo");
+  window.addEventListener("load", () => {
+    // 1. 縮放處理
+    function resize(){
+      const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+      document.documentElement.style.setProperty("--scale-factor", s);
+    }
+    resize();
+    window.addEventListener("resize", resize);
 
-// 等真的開始播
-video.addEventListener("playing", () => {
-  // 🔥 播起來後再開聲音
-  video.muted = false;
-});
+    // 2. 打字機內容
+    const TEXT = `
+    > 評分完成
+    數據已存入模範生資料庫
+    _
+    正在為您準備數位下載路徑
+    歡迎您再次使用本系統...`;
+    
+    const el = document.getElementById("type-text");
+    const btnArea = document.getElementById("button-area");
+    let i = 0;
+    let canJump = false;
 
-video.addEventListener("canplay", () => {
-  video.play().catch(console.log);
-});
+    // 3. 執行打字流程
+    (function type(){
+      if(i <= TEXT.length){
+        el.textContent = TEXT.slice(0,i++);
+        setTimeout(type, 45);
+      } else {
+        // --- 🟢 修改處：打字一結束，立刻顯示 QR Code 區 ---
+        generateQR();               // 1. 生成 QR Code
+        btnArea.style.opacity = "1"; // 2. 讓按鈕與 QR 區顯現 (淡入動畫)
+        
+        // --- 啟動進度條 (維持背景執行或單純顯示進度) ---
+        showLoadingText("相片列印中，請稍候...");
+        startFakeLoading(100, 300, () => {
+            // 進度條跑完後，允許按 Enter 鍵跳轉
+            canJump = true; 
+            // 可以在此時修改提示文字，告訴使用者可以離開了
+            showLoadingText("列印完成，歡迎下次使用！");
+        });
+      }
+    })();
+  
+    // 4. 按鍵監聽
+    window.addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.keyCode === 13) && canJump) {
+        finish();
+      }
+    });
+  });
 
+  // 生成 QR Code 函式
+  function generateQR() {
+    const myLocalIP = "172.20.10.5"; 
+    const downloadUrl = `http://${myLocalIP}:5501/download.html`; 
+    const qrcodeContainer = document.getElementById("qrcode");
+    if (qrcodeContainer && qrcodeContainer.innerHTML === "") {
+        new QRCode(qrcodeContainer, {
+            text: downloadUrl,
+            width: 150,
+            height: 150,
+            colorDark: "#ffffff",
+            colorLight: "rgba(0,0,0,0)"
+        });
+    }
+  }
+
+  function showLoadingText(text){
+    const el = document.getElementById("loading-text");
+    if(el) el.textContent = text;
+    document.getElementById("loading-box").style.display = "block";
+  }
+
+  function startFakeLoading(targetPercent, speed, callback) {
+    const bar = document.getElementById("progress-bar");
+    const text = document.getElementById("progress-text");
+    let p = 0;
+    const t = setInterval(() => {
+        p++;
+        bar.style.width = p + "%";
+        text.textContent = p + "%";
+        if (p >= targetPercent) {
+            clearInterval(t);
+            if(callback) callback();
+        }
+    }, speed);
+  }
+
+  function finish() {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
 </script>
-
 </body>
 </html>

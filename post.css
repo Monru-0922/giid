@@ -1,393 +1,291 @@
 /* ===============================
    Reset & Base
 ================================ */
-* {
-    box-sizing: border-box;
-  }
-  
-  html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    /* 確保寬度不會因為背景圖 200% 而被撐開出現捲軸 */
-    max-width: 100vw; 
-    max-height: 100vh;
-    background: #000;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    overflow: hidden;
-    color: #fff;
-}
-  
-  /* ===============================
-     Overlay
-  ================================ */
-  #post-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;         /* 使用 Flex */
-    justify-content: center; 
-    align-items: center;    
-    z-index: 999;
-    overflow: hidden;
-    background: #000;
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  color: #fff;
 }
 
-  /* IG 背景圖 */
-  /* 修改這部分 */
+/* ===============================
+   Overlay & Background
+================================ */
+#post-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;   /* 🟢 確保寬度填滿 */
+  height: 100vh;  /* 🟢 確保高度填滿 */
+  display: flex;
+  justify-content: center; 
+  align-items: center;    
+  z-index: 999;
+  background: #000;
+}
+
 .ig-page-bg {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;  /* 改回 100% */
-  height: 100%; /* 改回 100% */
-  
-  /* 用縮放來達成原本 200% 的感覺，這不會觸發滾動條偏移 */
-  transform: scale(1.5); 
-  
-  z-index: 0;
+  width: 100vw;
+  height: 100;
+  z-index: 2;
   opacity: 0.7;
   object-fit: cover;
   pointer-events: none;
-
-  /* 減少動畫負擔：移除 will-change，這在手機上很吃資源 */
   animation:
-    bg-move 6s ease-in-out infinite, /* 減慢速度 */
+    bg-move 6s ease-in-out infinite,
     bg-opacity 3s steps(1) infinite;
 }
 
-/* 簡化動畫，避免同時位移 X 與 Y */
-@keyframes bg-move {
-  0%   { transform: scale(1.5) translate(0, 0); }
-  50%  { transform: scale(1.5) translate(5%, 2%); }
-  100% { transform: scale(1.5) translate(0, 0); }
+.post-black-bg {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
-  
-  /* ===============================
-     背景透明度起伏
-  =============================== */
-  @keyframes bg-opacity {
-    0%   { opacity: 0.75; }
-    20%  { opacity: 0.3; }
-    40%  { opacity: 0.85; }
-    60%  { opacity: 0.4; }
-    80%  { opacity: 0.9; }
-    100% { opacity: 0.75; }
-  }
-  
-  /* ===============================
-     閃現 / glitch flicker
-  =============================== */
-  @keyframes bg-flicker {
-    0%   { filter: brightness(1); }
-    15%  { filter: brightness(1.6); }
-    30%  { filter: brightness(0.7); }
-    45%  { filter: brightness(1.3); }
-    100% { filter: brightness(1); }
-  }
-  
-  
-  
-  /* 黑底遮罩 */
-  .post-black-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* 半透明黑 */
-    z-index: 10;
-}
-#viewport {
-  position: relative;   
-  width: 380px;         
-  height: 700px;
+
+/* ===============================
+   IG Phone Frame
+================================ */
+.ig-phone {
+  position: relative;
+  width: 100vw !important;
+  height: 100vh !important;
   background: #000;
-  overflow: hidden;
-}
-  /* ===============================
-     IG Phone Frame
-  ================================ */
- /* 修改此處：移除 transform */
- .ig-phone {
-  position: relative;    /* 不要用 fixed，讓它待在容器裡 */
-  width: 90%;           /* 填滿父容器 (380px) */
-  height: 90%;          /* 填滿父容器 (700px) */
-  background: #000;
-  border-radius: 24px;
+  border-radius: 0;
   z-index: 100;
-  box-shadow: 0 0 40px rgba(0,0,0,1);
+  flex-shrink: 0;
   overflow: hidden;
-  
-  /* ❌ 刪除以下這幾行，這是造成截圖偏移的主因 */
-  /* top: 50%; left: 50%; transform: translate(-50%, -50%); */
 }
-.phone-frame {
+
+.full-page-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 200;
+  pointer-events: none;
+}
+
+/* ===============================
+   Top Bar & Stories
+================================ */
+.top-bar {
+  height: 48px;
+  background: #000;
+  border-bottom: 1px solid #000;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.story-bar {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  width: 1080px;
+  height: 220px;
+  display: flex !important;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 9999; /* 高於 post */
+  padding: 0 40px
+}
+
+.story {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.story img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ===============================
+   Post Content
+================================ */
+.post {
+  position: absolute;
+  top: 350px;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 350px);
+  display: flex;
+  flex-direction: column;
+  z-index: 105; 
+  /* 🟢 補上分號，確保層級正確 */
+  overflow: hidden;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 30px;
+}
+
+.post-header img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-right: 15px;
+}
+
+.post-header .info {
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.post-img-wrap {
+  position: relative;
+  width: 1080px;
+  height: 1080px;
+  overflow: hidden;
+  background: #111;
+}
+
+.post-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===============================
+   Actions & Comments
+================================ */
+.actions {
+  display: flex;
+  gap: 30px;
+  padding: 30px;
+  font-size: 40px;
+}
+
+.likes-count {
+  padding: 0 30px;
+  font-size: 30px;
+  opacity: 0.8;
+}
+
+.comments {
+  padding: 20px 30px;
+  font-size: 26px;
+}
+
+.comment {
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.comment-box {
+  margin-top: auto;
+  border-top: 1px solid #333;
+  padding: 30px;
+  background: #000;
+}
+
+.comment-box input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 30px;
+}
+
+/* ===============================
+   Animations
+================================ */
+
+
+/* ===============================
+   Others
+================================ */
+#btn-end-post span {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  z-index: 120;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border: 1px solid #555;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+/* ===============================
+   2. 評論爆炸動畫設定
+================================ */
+/* 這是承載所有噴發評論的容器 */
+#commentsList {
+  /* 🟢 改為 absolute 才能精確定位在 70 likes 上方且不擠壓到輸入框 */
+  position: absolute; 
+  bottom: 120px;      /* 根據你的截圖，這大約是 70 likes 的高度位置 */
+  left: 0;
+  width: 100%;
+  height: 400px;      /* 給予評論噴發與堆疊的空間 */
+  overflow: visible;  /* 允許評論噴出容器邊界 */
+  z-index: 5000;      /* 確保高於 full-page-frame 的 200 */
+  pointer-events: none; /* 確保評論不會擋住下方的點擊動作[cite: 1] */
+}
+
+.exploding-comment {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 5000;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* 🟢 針對頭像的設定，確保它顯示 text2.jpg 的局部 */
+.exploding-comment img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover; /* 讓圖片填滿圓圈 */
+  border: 1px solid #555;
+}
+
+.exploding-comment.active {
+  opacity: 1;
+}
+
+/* 移除原本背景動畫的定義 (bg-move, bg-opacity) 以節省效能 */
+.ig-page-bg {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  
-  object-fit: fill;     /* 讓相框圖片自動縮放到跟手機一樣大 */
-  pointer-events: none; /* 確保點擊可以穿過相框 */
-  z-index: 100;         /* 確保在手機內部所有東西的最上方 */
+  width: 100vw;
+  height: 100vh; /* 🟢 補上 vh */
+  z-index: 2;
+  opacity: 0.3; /* 調低一點讓爆炸評論更明顯 */
+  object-fit: cover;
+  pointer-events: none;
 }
-  .full-page-frame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* 關鍵設定 */
-    object-fit: fill;     /* 如果要強制框撐滿全螢幕 */
-    /* object-fit: contain;  如果你希望框完整顯示不被裁切 */
-    
-    pointer-events: none; /* ！！！非常重要：讓滑鼠可以穿透框點擊下面的按鈕與留言框 */
-    z-index: 100;         /* 確保在所有東西的最上方 */
-}
-  /* ===============================
-     Top Bar
-  ================================ */
-  .top-bar {
-    height: 48px;
-    background: #000;
-    border-bottom: 1px solid #000;
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    font-size: 14px;
-    letter-spacing: 2px;
-  }
-  
-  /* ===============================
-     Stories（目前只放結束）
-  ================================ */
-  .stories {
-   
-    border-bottom: 1px solid #000;
-    display: flex;
-    justify-content: flex-end;
-  }
-  
-  .btn-end-ig {
-    background: transparent;
-    border: 3px solid #555;
-    color: #fff;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-  
-  }
-  
-  .btn-end-ig:hover {
-    background: #fff;
-    color: #000;
-  }
-  .story-bar {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 10px;
-   
-    background: #000;
-  }
-  .story {
-    position: relative;
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    overflow: hidden;
-  }
-  
-  .story img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    animation: flicker 3s infinite;
-  }
-  .story .ring {
-    position: absolute;
-    inset: -2px;
-    transform: rotate(-90deg);
-  }
-  
-  .story circle {
-    fill: none;
-    stroke: white;
-    stroke-width: 4;
-  
- 
-    stroke-dasharray: 290;       /* 約等於整個圓周 */
-    stroke-dashoffset: 0;
-  
-    animation: ring-flow 2s linear infinite;
-    opacity: 0.9;
-  }
-  .s1 circle { animation-duration: 2.4s; }
-.s2 circle { animation-duration: 1.8s; }
-.s3 circle { animation-duration: 3s; }
-.s4 circle { animation-duration: 2.1s; }
-@keyframes ring-flow {
-    from { stroke-dashoffset: 0; }
-    to   { stroke-dashoffset: -100; }
-  }
-  @keyframes flicker {
-    0%   { opacity: 1; }
-    10%  { opacity: 0.4; }
-    20%  { opacity: 1; }
-    35%  { opacity: 0.7; }
-    60%  { opacity: 1; }
-    100% { opacity: 1; }
-  }
-  
-  /* ===============================
-     Post
-  ================================ */
-  .post {
-    display: flex;
-    flex-direction: column;
-    height: calc(100% - 100px);
-    overflow-y: auto;
-  }
-  
-  /* Header */
-  .post-header {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-  }
-  
-  .post-header img {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .post-header .info {
-    font-size: 12px;
-    line-height: 1.3;
-  }
-  
-  /* ===============================
-     Image Area
-  ================================ */
-  .post-img-wrap {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-  }
-  
-  .post-img {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-  
-  /* 分數疊字 */
-  .glitch-score {
-    position: absolute;
-    bottom: 10px;
-    left: 100px;
-    font-size: 14px;
-    letter-spacing: 1px;
-    color: #fff;
-    animation: glitch 2s infinite;
-  }
-  
-  /* glitch 動畫 */
-  @keyframes glitch {
-    0% { transform: translate(0); opacity: 1; }
-    20% { transform: translate(-1px, 1px); }
-    40% { transform: translate(1px, -1px); opacity: 0.8; }
-    60% { transform: translate(-1px, 0); }
-    80% { transform: translate(1px, 1px); opacity: 0.9; }
-    100% { transform: translate(0); }
-  }
-  
-  /* ===============================
-     Actions
-  ================================ */
-  .actions {
-    display: flex;
-    gap: 14px;
-    padding: 10px;
-    font-size: 20px;
-  }
-  
-  .actions span {
-    cursor: pointer;
-  }
-  
-  /* Likes */
-  .likes-count {
-    padding: 0 10px;
-    font-size: 12px;
-    opacity: 0.8;
-  }
-  
-  /* ===============================
-     Comments
-  ================================ */
-  .comments {
-    padding: 10px;
-    font-size: 13px;
-  }
-  
-  .comment {
-    margin-bottom: 6px;
-    opacity: 0.9;
-  }
-  
-  /* ===============================
-     Comment Box
-  ================================ */
-  .comment-box {
-    margin-top: auto;
-    border-top: 1px solid #000;
-    padding: 10px;
-  }
-  
-  .comment-box input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-size: 13px;
-  }
- 
-  /* ===============================
-     外層結束按鈕（預設隱藏）
-  ================================ */
-
-  #btn-end-post span{
-    position: absolute;
-    right: 20px;
-    bottom: 12px;
-    z-index: 120;
-   
-    background: rgba(0,0,0,0.7);
-    color: #fff;
-    border: 1px solid #555;
-    padding: 8px 14px;
-    font-size: 12px;
-
-    cursor: pointer;
-  }
-  #btn-end-post a:hover{
-    opacity: 0.5;
-  } 
-  .post-frame-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: fill;    /* 強制撐滿，若框的比例固定可改 contain */
-    pointer-events: none; /* 讓滑鼠點擊可以穿透框，點到下面的照片 */
-    z-index: 5;          /* 確保在照片之上 */
-  }

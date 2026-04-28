@@ -1,86 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="google" content="notranslate" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>模範生 IG Post</title>
     <link rel="stylesheet" href="./post.css" />
 </head>
+<body>
+  <div id="post-overlay">
+    <img id="post-bg" class="ig-page-bg" src="image/text2.png" alt="post background">
+    <div class="post-black-bg"></div>
 
-<body><div id="post-overlay">
-  <img id="post-bg" class="ig-page-bg" src="image/text2.png" alt="post background">
+    <div id="preview-scaler">
+      <div class="ig-phone">
+        <div class="top-bar">模範生 &gt; <span>POST</span></div>
 
-  <div class="post-black-bg"></div>
-
-  <div class="ig-phone">
-      <div class="top-bar">
-          模範生 &gt; <span>POST</span>
-      </div>
-
-      <div class="story-bar">
-          <div class="story s1">
-              <svg viewBox="0 0 100 100" class="ring"><circle cx="50" cy="50" r="46"></circle></svg>
-              <img src="image/bth.png">
-          </div>
-          <div class="story s2">
-              <svg viewBox="0 0 100 100" class="ring"><circle cx="50" cy="50" r="46"></circle></svg>
-              <img src="image/bth.png">
-          </div>
-          <div class="story s3">
-              <svg viewBox="0 0 100 100" class="ring"><circle cx="50" cy="50" r="46"></circle></svg>
-              <img src="image/bth.png">
-          </div>
-          <div class="story s4">
-              <svg viewBox="0 0 100 100" class="ring"><circle cx="50" cy="50" r="46"></circle></svg>
-              <img src="image/bth.png">
-          </div>
-      </div>
-    
-      <div class="post">
+        <div class="story-bar">
+          <div class="story"><img src="image/bth.png" alt="avatar"></div>
+          <div class="story"><img src="image/bth2.png" alt="avatar"></div>
+          <div class="story"><img src="image/bth3.png" alt="avatar"></div>
+          <div class="story"><img src="image/bth.png" alt="avatar"></div>
+        </div>
+       
+        <div class="post">
           <div class="post-header">
-              <img src="image/bth.png" alt="avatar">
-              <div class="info">
-                  <strong>MODEL1</strong><br>
-                  <small>2026/08/07</small>
-              </div>
+            <img src="image/bth.png" alt="avatar">
+            <div class="info">
+              <strong>MODEL1</strong><br>
+              <small>2026/08/07</small>
+            </div>
           </div>
 
           <div class="post-img-wrap">
-              <img id="postImage" class="post-img" alt="post image">
-              <div id="glitchScore" class="glitch-score">最終分數：21分</div>
+            <img id="postImage" class="post-img" alt="post image">
           </div>
 
           <div class="actions">
-              <span id="likeBtn">♡</span>
-              <span>💬</span>
+            <span id="likeBtn">♡</span>
+            <span>💬</span>
           </div>
 
           <div id="likesCount" class="likes-count">0 likes</div>
-          <div id="commentsList" class="comments"></div>
+
+          <!-- 🟢 爆炸評論唯一的容器，放在照片下方 -->
+          <div id="commentsList"></div>
 
           <div class="comment-box">
-              <input id="commentInput" type="text" placeholder="留言……">
+            <input id="commentInput" type="text" placeholder="留言……">
           </div>
-      </div>
-      <div id="btn-end-post" style="pointer-events: none;">
-        <span id="countdown-text">頁面將於 5 秒後跳轉拍照列印...</span>
-    </div>
- <img src="image/post-frame.png" class="full-page-frame" alt="frame overlay"></div>
+        </div>
+
+        <img src="image/post-frame.png" class="full-page-frame" alt="frame overlay">
+      </div> 
+    </div> 
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="post.js"></script>
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="post.js"></script>
-<script>
-    
-  const stories = document.querySelectorAll(".story img");
-  
-  stories.forEach((img, i) => {
-    let toggle = false;
-  
-    setInterval(() => {
-      toggle = !toggle;
-      img.src = toggle ? "image/bth3.png" : "image/bth.png";
-    }, 1800 + i * 600); // 每顆不同節奏
-  });
-  </script>
-  
 </html>

@@ -4,281 +4,250 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>列印選擇 - 質感流動邊框版</title>
+    <script src="qrcode.min.js"></script>
     <style>
-        /* 嚴格保留原始文字數值 */
-        body { 
-            background: #000; color: #fff; font-family: sans-serif; text-align: center; 
-            margin: 0; padding: 20px; 
-            overflow-x: hidden; /* 防止背景撐開寬度 */
-        }
-        h1 { font-weight: 300; letter-spacing: 2px; font-size: 24px; margin-bottom: 0px; }
-        p { font-weight: 300; font-size: 12px; letter-spacing: 2px; margin-bottom: 0px; }
-        #viewport{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:1080px;
-  height:1920px;
-  transform:translate(-50%,-50%) scale(var(--scale-factor,1));
-  overflow:hidden;
-  background:#000;
+    /* 1. 基礎佈局：確保電視全屏不捲動 */
+body { 
+    background: #000; 
+    color: #fff; 
+    font-family: sans-serif; 
+    text-align: center; 
+    margin: 0; 
+    padding: 0; 
+    overflow: hidden; /* 強制消除捲軸 */
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 垂直置中 */
+    align-items: center;     /* 水平置中 */
 }
-        /* 網格佈局優化 */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 40px;
-            max-width: 600px; /* 稍微縮小 max-width 確保在筆電螢幕不會太散 */
-            margin: 20px auto;
-            padding: 0 4px;
-        }
 
-        /* 2. 背景優化：防止干擾截圖座標 */
-        .ig-page-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            object-fit: cover;
-            z-index: -1;
-            pointer-events: none;
-            opacity: 0.6;
-        }
+h1 { font-size: 3vh; margin-top: 0; margin-bottom: 5px; font-weight: 300; letter-spacing: 2px; }
+p.desc { font-size: 1.6vh; margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; opacity: 0.8; }
 
-        /* 📸 照片容器：流動數據線效果 */
-        .item {
-            background: #111;
-            padding: 15px;
-            border: 1px solid #333; 
-            cursor: pointer;
-            position: relative;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            opacity: 0.9;
-            aspect-ratio: 9/ 16; /* 修正回標準比例 */
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            /* 修正 GitHub 尺寸感 */
-            width: 100%;
-        }
+.ig-page-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: -1; pointer-events: none; opacity: 0.6; }
 
-        /* 流動數據線 (Data Line) */
-        .item::before {
-            content: "";
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: conic-gradient(
-                from 0deg, 
-                transparent 0deg, 
-                transparent 300deg, 
-                #fff 360deg
-            );
-            z-index: 1;
-            animation: flowLine 2.5s linear infinite;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
+/* 2. 照片網格區：強制 9:16 比例 */
+.grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3vh 40px; 
+    width: fit-content; 
+    margin: 0 auto;
+}
 
-        .item:hover::before, .item.selected::before { opacity: 1; }
+.item {
+    background: #111; 
+    padding: 12px; 
+    border: 1px solid #333; 
+    cursor: pointer;
+    position: relative; 
+    transition: 0.3s;
+    
+    /* ✨ 鎖定 9:16 比例的核心設定 */
+    height: 32vh;        /* 調整此高度可縮放整體大小 */
+    aspect-ratio: 9 / 16; 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column;
+}
 
-        /* 內部遮罩：確保線條只在 1px 邊緣 */
-        .item::after {
-            content: "";
-            position: absolute;
-            inset: 1px; 
-            background: #111;
-            z-index: 2;
-        }
+/* ✨ 找回你的流動邊框動畫 */
+.item::before {
+    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, #fff 360deg);
+    z-index: 1; animation: flowLine 2.5s linear infinite; opacity: 0; transition: opacity 0.3s;
+}
+.item:hover::before, .item.selected::before { opacity: 1; }
+.item::after { content: ""; position: absolute; inset: 1px; background: #111; z-index: 2; }
 
-        @keyframes flowLine {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+@keyframes flowLine { 
+    from { transform: rotate(0deg); } 
+    to { transform: rotate(360deg); } 
+}
 
-        .item:hover {
-            transform: scale(1.02);
-            opacity: 1;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
+/* 照片與層級設定 */
+.item.selected {
+     border-color: #fff;
+     background: #1a1a1a; 
+}
 
-        .item.selected { border-color: #555; background: #1a1a1a; }
+.photo { 
+     width: 85%;
+     height: auto;
+     object-fit: contain; 
+     position: absolute; 
+     top: 50%;
+     left: 50%; 
+     transform: translate(-50%, -50%);
+     z-index: 3;
+     background: #000;
+    }
 
-        /* 圖片與相框層級校準 */
-        .photo {
-            width: calc(100% - 30px);
-            height: calc(100% - 60px);
-            object-fit: cover;
-            position: absolute;
-            top: 15px; left: 15px;
-            z-index: 3; 
-            transition: 0.5s;
-        }
-       
-        .frame-overlay {
-            position: absolute;
-            top: 15px; left: 15px;
-            width: calc(100% - 30px);
-            height: calc(100% - 60px);
-            background-image: url('image/03.png');
-            background-size: 100% 100%;
-            background-repeat: no-repeat;
-            pointer-events: none;
-            z-index: 4;
-        }
-      
-        .checkbox {
-            position: absolute;
-            top: 20px; right: 20px;
-            width: 20px; height: 20px;
-            border: 1px solid #fff;
-            z-index: 6;
-        }
-        .item.selected .checkbox { background: #fff; }
-        .checkbox::after { content: "✓"; color: #000; font-weight: bold; line-height: 20px; display: none; }
-        .item.selected .checkbox::after { display: block; }
+.frame-overlay {
+     position: absolute;
+     top: 0; 
+     left: 0;
+     width: 100%; 
+     height: 100%; background-image: url('image/photo-frame.png');
+     background-size: 100% 100%; pointer-events: none;
+     z-index: 4;
+    }
 
-        .item-label {
-            position: absolute;
-            bottom: 10px;
-            width: 100%;
-            left: 0;
-            font-size: 14px;
-            font-weight: 200;
-            z-index: 5;
-            letter-spacing: 3px;
-            text-align: center;
-        }
+.checkbox { position: absolute; top: 15px; right: 15px; width: 20px; height: 20px; border: 1px solid #fff; z-index: 6; }
+.item.selected .checkbox { background: #fff; }
+.item.selected .checkbox::after { content: "✓"; color: #000; font-weight: bold; line-height: 20px; display: block; text-align: center; font-size: 14px;}
+.item-label { position: absolute; bottom: 8px; width: 100%; left: 0; font-size: 1.4vh; font-weight: 200; z-index: 5; letter-spacing: 2px; }
 
-        /* 按鈕樣式校準 */
-        .btn-group { margin-top: 50px; padding-bottom: 50px; }
-        button {
-            border-radius: 0px;
-            cursor: pointer; border: none; 
-            margin: 10px 20px; /* 增加響應式間距 */
-            transition: 0.3s;
-        }
-        
-        #printBtn { 
-            background: #fff; color: #000;
-            font-size: 16px; font-weight: 400; padding: 12px 30px; letter-spacing: 2px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-        }
-        #printBtn:hover {
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
-            transform: translateY(-2px);
-        }
+/* 3. 底部區域：寬度自動同步照片 */
+.bottom-area { 
+    /* 自動計算寬度 = (單張寬 * 2) + 間距 */
+    width: calc((32vh * 9 / 16) * 2 + 40px); 
+    margin-top: 3vh;
+    display: flex; 
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 40px; 
+}
 
-        #endBtn { 
-            background: transparent; color: #fff; border: 0.5px solid #555;
-            font-size: 16px; font-weight: 400; padding: 12px 30px; letter-spacing: 2px;
-        }
-        #endBtn:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+.btn-section { display: flex; flex-direction: column; gap: 10px; flex: 1; }
 
-        /* 🖨️ 列印控制 (確保列印時不出錯) */
-        @media print {
-            body { background: white; color: black; padding: 0; }
-            .no-print { display: none !important; }
-            .grid { display: block; margin: 0; }
-            .item { 
-                border: none; padding: 0; margin-bottom: 20px; 
-                page-break-after: always; width: 100%; 
-                aspect-ratio: 9 / 16; -webkit-print-color-adjust: exact; 
-            }
-            .item::before, .item::after { display: none; }
-            .checkbox, .item-label { display: none; }
-            .photo, .frame-overlay { width: 100%; height: 100%; top: 0; left: 0; }
-        }
+#printBtn, #endBtn {
+    width: 100%; height: 5vh; min-height: 40px;
+    display: flex; justify-content: center; align-items: center;
+    font-weight: bold; font-size: 1.8vh; letter-spacing: 2px;
+    cursor: pointer; border-radius: 0; transition: 0.3s;
+}
+
+#printBtn { background: #fff; color: #000; border: none; }
+#endBtn { background: transparent; color: #fff; border: 1px solid #555; }
+
+
     </style>
 </head>
 <body>
 
-<div class="no-print">
-    <img id="post-bg" class="ig-page-bg" src="image/final-bg.png" alt="post background">
-    <h1>MODEL1_請選擇想要列印的照片</h1>
-    <p>&lt;可多選或單選&gt;</p>
-</div>
+<img id="post-bg" class="ig-page-bg" src="image/final-bg.png">
+<h1>MODEL1_請選擇照片</h1>
+<p>左下角掃描 QR Code 即可下載全部照片</p>
 
 <div class="grid">
-    <div class="item" onclick="toggle(this)">
+    <div class="item" onclick="toggle(this)" data-id="score">
         <img id="img-score" class="photo" src="image/05.png">
         <div class="frame-overlay"></div>
         <div class="checkbox"></div>
         <div class="item-label">01＿評分結果表</div>
     </div>
-
-    <div class="item" onclick="toggle(this)">
-        <img id="img-makeup" class="photo" src="image/placeholder.png">
+    <div class="item" onclick="toggle(this)" data-id="makeup">
+        <img id="img-makeup" class="photo" src="image/05.png">
         <div class="frame-overlay"></div>
         <div class="checkbox"></div>
         <div class="item-label">02＿美妝濾鏡</div>
     </div>
-
-    <div class="item" onclick="toggle(this)">
-        <img id="img-text" class="photo" src="image/placeholder.png">
+    <div class="item" onclick="toggle(this)" data-id="text">
+        <img id="img-text" class="photo" src="image/05.png">
         <div class="frame-overlay"></div>
         <div class="checkbox"></div>
         <div class="item-label">03＿文字濾鏡</div>
     </div>
-
-    <div class="item" onclick="toggle(this)">
-        <img id="img-post" class="photo" src="image/placeholder.png">
+    <div class="item" onclick="toggle(this)" data-id="post">
+        <img id="img-post" class="photo" src="image/05.png">
         <div class="frame-overlay"></div>
         <div class="checkbox"></div>
         <div class="item-label">04_社群貼文介面</div>
     </div>
 </div>
 
-<div class="btn-group no-print">
-    <button id="printBtn" onclick="doPrint()">確認列印</button>
-    <button id="endBtn" onclick="finish()">結束體驗</button>
+<div class="bottom-area">
+    <div class="btn-section">
+        <button id="printBtn" onclick="doPrint()">
+         <span>列印紙本</span> 
+        </button>
+
+    </div>
 </div>
 
 <script>
     window.onload = () => {
-        // 從 LocalStorage 讀取四張截圖
-        const score = localStorage.getItem("score_shot"); 
-        const makeup = localStorage.getItem("makeup_shot");
-        const text = localStorage.getItem("text_shot");
-        const post = localStorage.getItem("post_shot");
+        // 1. 載入照片預覽
+       const photoMapping = {
+        'score': 'photo_01', // 評分表
+        'makeup': 'photo_02', // 美妝
+        'text': 'photo_03',  // 文字
+        'post': 'photo_04'   // 社群
+    };;
+    Object.keys(photoMapping).forEach(key => {
+        const data = localStorage.getItem(photoMapping[key]);
+        const imgEl = document.getElementById('img-' + key);
+        if (imgEl && data) {
+            imgEl.src = data;
+            console.log(`✅ 成功載入 ${key} 照片`);
+        } else {
+            console.warn(`❌ 找不到 ${key} 的存檔 (${photoMapping[key]})`);
+        }
+    });
 
-        if(score) document.getElementById('img-score').src = score;
-        if(makeup) document.getElementById('img-makeup').src = makeup;
-        if(text) document.getElementById('img-text').src = text;
-        if(post) document.getElementById('img-post').src = post;
+
     };
 
     function toggle(el) {
         el.classList.toggle('selected');
     }
 
-    function doPrint() {
-        const selected = document.querySelectorAll('.item.selected');
-        if (selected.length === 0) {
-            alert("請先選擇至少一張照片");
-            return;
-        }
+    // 修正過的合成函數：完整顯示 9:16 在 4:6 畫布上 (不切割)
+    async function compositeImage(imgElement) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 4x6 標準解析度
+            canvas.width = 1200; 
+            canvas.height = 1800;
 
-        // 隱藏未選中的照片
-        document.querySelectorAll('.item').forEach(item => {
-            if (!item.classList.contains('selected')) {
-                item.style.display = 'none';
-            }
+            // 讀取框
+            const frameImg = new Image();
+            frameImg.src = 'image/photo-frame.png'; 
+            frameImg.onload = () => {
+             // 背景填白
+             ctx.fillStyle = "#ffffff";
+             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // ✨ 調整縮放比例：讓圖片只佔畫布高度的 9% (預留上下安全區)
+            const safeScale = 0.90; 
+            const targetHeight = canvas.height * safeScale;
+            const targetWidth = (targetHeight * 9) / 16; 
+
+            // ✨ 計算置中座標
+            const offsetLeft = (canvas.width - targetWidth) / 2;
+            const offsetTop = (canvas.height - targetHeight) / 2;
+
+            // 畫照片 (放在安全區域內)
+            ctx.drawImage(imgElement, offsetLeft, offsetTop, targetWidth, targetHeight);
+            
+            // 畫框 (跟著照片一起縮小置中)
+            ctx.drawImage(frameImg, offsetLeft, offsetTop, targetWidth, targetHeight);
+            
+            resolve(canvas.toDataURL('image/jpeg', 0.95));
+            };
         });
-
-        window.print();
-
-        // 列印視窗關閉後恢復顯示
-        setTimeout(() => {
-            document.querySelectorAll('.item').forEach(item => item.style.display = 'flex');
-        }, 1000);
+    }
+// 定義列印按鈕的功能
+function doPrint() {
+    const selectedItems = document.querySelectorAll('.item.selected');
+    
+    if (selectedItems.length === 0) {
+        alert("請至少選擇一張照片進行列印！");
+        return;
     }
 
-    function finish() {
-        if(confirm("確定要結束體驗並清除所有照片嗎？")) {
-            localStorage.clear();
-            window.location.href = "index.html";
-        }
-    }
+    console.log("準備處理列印...");
+    
+    // 這裡可以加入你原本的 compositeImage 邏輯
+    // 處理完後跳轉到下一頁
+    window.location.href = "ending.html"; 
+}
+
 </script>
 
 </body>

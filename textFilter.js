@@ -116,53 +116,77 @@ function drawFace(results){
 }
 
 /* ===============================
-   自動拍照
+   啟動自動拍照 (補回這段，解決報錯)
 =============================== */
-function startAutoShot(){
-  console.log("⏱ 5 秒後自動拍照");
-
+function startAutoShot() {
+  console.log("⏱ 啟動 8 秒自動拍照倒數...");
+  // 這裡的 8000 是指「進入頁面後多久拍照」
+  // 拍照後 takePhotoAndGo 裡面還會再停 8 秒讓使用者看濾鏡
   setTimeout(() => {
     takePhotoAndGo();
-  }, AUTO_SHOT_MS);
+  }, 5000); // 建議設 5 秒，讓使用者有時間對準臉
 }
 
 /* ===============================
-   拍照 + 跳轉
+   拍照 + 延遲跳轉 (Step 5 修正版：合成人臉+濾鏡+藍綠框)
 =============================== */
-/* ===============================
-   拍照 + 跳轉
-=============================== */
-function takePhotoAndGo(){
+async function takePhotoAndGo() {
   const w = video.videoWidth;
   const h = video.videoHeight;
   if (!w || !h) return;
 
+  // 1. 建立一個 1080x1920 的合成畫布 (確保比例為 9:16)
   const snap = document.createElement("canvas");
-  snap.width  = w;
-  snap.height = h;
+  snap.width  = 1080;
+  snap.height = 1920;
   const sctx  = snap.getContext("2d");
 
-  // ① 畫鏡像攝影機 (跟原本一樣)
+  // ① 畫底層：鏡像攝影機 (手動翻轉)
   sctx.save();
-  sctx.translate(w, 0);
+  sctx.translate(1080, 0);
   sctx.scale(-1, 1);
-  sctx.drawImage(video, 0, 0, w, h);
+  // 這裡將原始影片填滿 1080x1920
+  sctx.drawImage(video, 0, 0, 1080, 1920);
   sctx.restore();
 
-  // ② 疊上目前 canvas 的文字濾鏡 (跟原本一樣)
-  sctx.drawImage(canvas, 0, 0, w, h);
+  // ② 畫中層：疊上目前畫面上正在跑的文字濾鏡 (canvas)
+  sctx.drawImage(canvas, 0, 0, 1080, 1920);
 
-  // ③ 存成圖片
-  const photo = snap.toDataURL("image/png");
+  // ③ 畫頂層：疊上藍綠色相框 (.frame-overlay)
+  // 請確保 HTML 裡有 <img class="frame-overlay" src="image/你的藍綠框.png">
+  const frameImg = document.querySelector(".frame-overlay"); 
+  if (frameImg && frameImg.complete) {
+      sctx.drawImage(frameImg, 0, 0, 1080, 1920);
+      console.log("🎨 藍綠色相框已合成");
+  } else {
+      console.warn("⚠️ 找不到相框元素或圖片尚未載入");
+  }
+
+  // ④ 執行存檔 (JPEG 品質 0.9 以利後續列印)
+  const photo = snap.toDataURL("image/jpeg", 0.9);
   
-  // ✅ 保留你原本跳轉 post.html 用的 key
-  localStorage.setItem("capturedImage", photo);
+  try {
+    // 同時存入 photo_03 (給 final 列印) 與 capturedImage (給下一頁顯示)
+    localStorage.setItem("photo_03", photo); 
+    localStorage.setItem("capturedImage", photo); 
+    console.log("✅ photo_03 完整合成圖存檔成功");
+  } catch (e) {
+    console.error("❌ 存檔失敗，可能是 LocalStorage 空間不足", e);
+  }
+
+  // ⑤ 倒數 5 秒跳轉
+  let timeLeft = 5;
+  const countdownDisplay = document.getElementById("countdown-text");
   
-  // ✅ 新增：存給列印選擇頁面用的 key
-  localStorage.setItem("text_shot", photo);
-
-  console.log("📸 已拍照，儲存至 text_shot 並跳轉 post.html");
-
-  // ④ 跳轉 (跟原本一樣)
-  window.location.href = "post.html";
+  const jumpTimer = setInterval(() => {
+    timeLeft--;
+    if (countdownDisplay) {
+        countdownDisplay.innerText = `分析完成！將於 ${timeLeft} 秒後跳轉...`;
+    }
+    
+    if (timeLeft <= 0) {
+      clearInterval(jumpTimer);
+      window.location.href = "post.html"; 
+    }
+  }, 1000); 
 }

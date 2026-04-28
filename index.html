@@ -6,13 +6,12 @@
   <title>goodmodel</title>
 
   <!-- A-Frame / MindAR / MediaPipe -->
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-aframe.prod.js"></script>
+ <script src="aframe.min.js"></script>
+ <script src="mindar-face-aframe.prod.js"></script> 
 
   <!-- MediaPipe（臉 + 手） -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+ <script src="camera_utils.js"></script>
+ <script src="face_mesh.js"></script>
 
   <link rel="stylesheet" href="./style.css" />
   <style>
@@ -194,7 +193,6 @@
     </div>
     <div id="progress-text">0%</div>
   </div>
-  
 </div>
 
 <!-- ===============================
@@ -237,151 +235,43 @@
       </div>
     </div>
    
-
-    
-
     <!-- ===============================
          05 評分表
     =============================== -->
-    <div id="rating-overlay">
-      <img src="image/05.png" alt="rating">
-    </div>
-
-    <!-- ===============================
-         06 Popup 1（兩個選項：OFF / NEXT）
-    =============================== -->
-    <div id="low-score-overlay" class="overlay">
-      <img src="image/Windows1.png" alt="low score popup">
-
-      <!-- 隱形按鈕區塊，位置靠 CSS 對齊圖上的 OFF / NEXT -->
-      <button id="btn-off"  class="choice-btn choice-off"></button>
-      <button id="btn-next" class="choice-btn choice-next"></button>
-    </div>
-
-  
+<div id="rating-overlay" style="display:none; position:fixed; inset:0; background:black; z-index:10000; overflow:hidden; justify-content:center; align-items:center;">
+    
+    <div id="rating-content-wrapper" style="position: relative; height: 100vh; width: auto; aspect-ratio: 9/16;">
         
+        <img id="rating-bg" src="image/score-01.jpg" style="height: 100%; width: 100%; display: block; z-index: 1;">
 
-          <!-- ===== 文字濾鏡 ===== -->
-          <img id="filter-bg" class="filter-bg" alt="text filter bg">
-          <video id="filter-video" autoplay muted playsinline></video>
-          <img id="faceOverlay" class="face-overlay" alt="face overlay">
-          <img src="image/frame2.png" class="frame-overlay frame-text" alt="text frame">
-        </div>
-      </div>
-    </div>
+<img src="image/deco-01.png" class="hud-deco" id="hud-face">
+  <img src="image/deco-02.png" class="hud-deco" id="hud-eye">
+  <img src="image/deco-03.png" class="hud-deco" id="hud-nose">
+  <img src="image/deco-04.png" class="hud-deco" id="hud-mouth">
 
-    <!-- ===============================
-         07 拍照完成（打卡頁）
-    =============================== -->
-    <div id="photo-finish-overlay">
-      <!-- 這張是實際拍下來的畫面（由 JS 塗上） -->
-      <img id="ui-photo-finish" class="photo-finish-bg" alt="photo result">
-      <!-- 上方 UI 框 -->
-      <img src="image/07.png" class="photo-finish-frame" alt="photo frame">
-    </div>
-
-    <!-- ===============================
-         07-2 OFF 版本的結束體驗頁
-    =============================== -->
-    <div id="photo-off-overlay">
-      <img src="image/07-2.png" alt="photo off">
-      <button id="btn-end-off">結束體驗</button>
-    </div>
-
-    <!-- ===============================
-         Popup 2（美妝拍完後的視窗）
-    =============================== -->
-    <div id="popup2-overlay" class="overlay">
-      <img src="image/Windows2.png" alt="popup 2">
-      <button id="btn-popup2-off"  class="choice-btn"></button>
-      <button id="btn-popup2-next" class="choice-btn"></button>
-    </div>
-
-    <!-- ===============================
-         INTRO 2（動畫二）
-    =============================== -->
-    <div id="intro2-container" class="full-screen-overlay">
-      <video
-        id="intro2-video"
-        src="Animation2.mp4"
-        playsinline
-        muted
-        class="media-content">
-      </video>
-    </div>
-
-    <!-- ===============================
-         Popup 3（文字濾鏡後的視窗）
-    =============================== -->
-    <div id="popup3-overlay" class="overlay">
-      <img src="image/Windows3.png" alt="popup 3">
-      <button id="btn-popup3-off"  class="choice-btn"></button>
-      <button id="btn-popup3-next" class="choice-btn"></button>
-    </div>
-
-    <!-- ===============================
-         IG 發文頁
-    =============================== -->
-    <div id="post-overlay">
-      <!-- IG 背景（文字-08） -->
-      <img id="post-bg" class="ig-page-bg" src="image/text2.png" alt="post background">
-
-      <div class="post-black-bg"></div>
-
-      <div class="ig-phone">
-        <!-- 上方列 -->
-        <div class="top-bar">
-          模範生 &gt; <span>POST</span>
+        <div id="user-photo-container" style="
+            position: absolute;
+            top: 11.5%; 
+            left: 7%; 
+            width: 39.5%; /* 根據你的 113mm/1080px 換算，大約是 39-40% */
+            height: 29.5%; /* 根據你的 150mm/1920px 換算，大約是 29-30% */
+            z-index: 100;
+            overflow: hidden;
+        ">
+            <img id="user-captured-photo" src="" style="width:100%; height:100%; object-fit:cover;">
         </div>
 
-        <!-- STORY 區（我先只保留結束體驗按鈕，避免干擾） -->
-        <div class="stories">
-          <button id="btn-end-post-ig" class="btn-main btn-end-ig">
-            結束體驗
-          </button>
-        </div>
+        <canvas id="crop-eye" class="feature-box"></canvas>
+        <canvas id="crop-nose" class="feature-box"></canvas>
+        <canvas id="crop-mouth" class="feature-box"></canvas>
 
-        <!-- 貼文內容 -->
-        <div class="post">
-          <div class="post-header">
-            <img src="image/bth.png" alt="avatar">
-            <div class="info">
-              <strong>MODEL1</strong><br>
-              <small>2026/08/07</small>
-            </div>
-          </div>
-
-          <div class="post-img-wrap">
-            <!-- 拍照結果 -->
-            <img id="postImage" class="post-img" alt="post image">
-            <!-- 分數 glitch -->
-            <div id="glitchScore" class="glitch-score">最終分數：21分</div>
-          </div>
-
-          <div class="actions">
-            <span id="likeBtn">♡</span>
-            <span>💬</span>
-          </div>
-
-          <div id="likesCount" class="likes-count">0 likes</div>
-          <div id="commentsList" class="comments"></div>
-
-          <div class="comment-box">
-            <input id="commentInput" type="text" placeholder="留言……">
-          </div>
-        </div>
-      </div>
-
-      <!-- 外層結束體驗（CSS 會隱藏） -->
-      <button id="btn-end-post">結束體驗</button>
     </div>
-  </div>
-
+</div>
   <!-- ===============================
        JS
   =============================== -->
+  <canvas id="capture-canvas" style="display:none;"></canvas>
   <script src="script.js"></script>
-
 
 </body>
 </html>

@@ -95,7 +95,7 @@ html,body{
   <div id="type-text"></div>
 
   <div id="button-area">
-    <div class="action-info">按下 白色按鍵 進入變美程序</div>
+    <div class="action-info">按下 白色按鍵 體驗結束_進入列印流程</div>
   </div>
 
 </div>
@@ -121,10 +121,12 @@ html,body{
     ====================== */
     const TEXT = `
    > 評分程序完成 
-   目前的分數僅是基礎外貌評估 
-   系統可以為你生成 「更精緻、更好看的樣貌」 
-   
-   想看看升級後的自己嗎？ 
+   Model_01您的最終分數為0分
+   系統判定您的最終樣貌
+  ［並不符合大眾審美］
+   _
+
+   歡迎您再次使用模範生系統
    
    請點擊按鍵確認您的下一步：
     `;
@@ -150,7 +152,7 @@ html,body{
     window.addEventListener("keydown", (e) => {
       if ((e.key === "Enter" || e.keyCode === 13) && canJump) {
         canJump = false; // 防止重複觸發
-        location.href = 'step4.html';
+        location.href = 'final.html';
       }
     });
 

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儲存照片</title>
+    <style>
+        body { background: #000; color: #fff; text-align: center; padding: 40px 20px; font-family: sans-serif; }
+        img { width: 100%; max-width: 500px; border: 1px solid #333; display: none; margin-top: 20px; }
+        p { letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+    <p>— 已成功連結裝置 —</p>
+    <img id="displayImg">
+    <p style="margin-top:20px; color:#888;">長按圖片即可儲存至手機</p>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+     const type = urlParams.get('type'); 
+     const targetImg = document.getElementById('displayImg');
+
+     // 這裡的 Key 必須與你在 index.html 拍照存檔時的 Key 一致
+     const storageKey = type + "_shot"; 
+     const shotData = localStorage.getItem(storageKey);
+
+     if (shotData) {
+      // 如果有抓到剛拍的照片數據 (Base64)
+      targetImg.src = shotData;
+     targetImg.style.display = 'block';
+     } else {
+    // 如果沒抓到，就顯示一張預設的框架圖 (就是你現在看到的)
+    targetImg.src = 'image/05.png'; // 或是對應的模板
+    targetImg.style.display = 'block';
+    console.log("未偵測到即時截圖，顯示模板。");
+  }
+    </script>
+</body>
+</html>

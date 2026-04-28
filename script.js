@@ -13,6 +13,27 @@ const blackout = document.getElementById("tv-blackout");
 
 function blackoutOn()  { blackout.classList.add("active"); }
 function blackoutOff() { blackout.classList.remove("active"); }
+// 強行鎖定 AR 畫面位置，防止 MindAR 亂跑
+function lockARPosition() {
+    const fix = (el) => {
+        if (el) {
+            el.style.setProperty('left', '0px', 'important');
+            el.style.setProperty('top', '0px', 'important');
+            el.style.setProperty('width', '100vw', 'important');
+            el.style.setProperty('height', '100vh', 'important');
+            // 🟢 修正：保留水平鏡像翻轉，否則畫面會崩潰
+            el.style.setProperty('transform', 'scaleX(-1)', 'important');
+        }
+    };
+    setInterval(() => {
+        fix(document.getElementById('ar-scene'));
+        fix(document.querySelector('.a-canvas'));
+        // ⚠️ 注意：這裡暫時不要 fix(video)，讓 CSS 去管 video 就好
+    }, 100);
+}
+
+// 啟動鎖定
+lockARPosition();
 
 
 // ----------------------------------
@@ -54,19 +75,6 @@ const btnLowNext = $("#btn-next");
 const btnEndOff  = $("#btn-end-off");
 
 
-// ----------------------------------
-// Hands video
-// ----------------------------------
-let handsVideo = document.getElementById("mk-video");
-if (!handsVideo) {
-  handsVideo = document.createElement("video");
-  handsVideo.id = "mk-video";
-  handsVideo.playsInline = true;
-  handsVideo.muted = true;
-  handsVideo.style.display = "none";
-  document.body.appendChild(handsVideo);
-}
-
 
 // ----------------------------------
 // 隱藏全部 overlay
@@ -78,8 +86,6 @@ function hideAll() {
     photoOffOverlay, typeScreen, type2Screen
   ].forEach(el => el && (el.style.display = "none"));
 }
-
-
 
 // ===============================
 // TV（開機 / 關機）
@@ -196,6 +202,7 @@ function showTypewriterScreen() {
     playTVOff(typeScreen, () => enterAR());
 
   }, 8000);
+  
 }
 
 
@@ -231,20 +238,19 @@ function enterAR() {
   if (arStarted) return;
   arStarted = true;
 
-  introVideo?.pause();
+  if (introVideo) {
+      introVideo.pause();
+      introVideo.src = ""; // 清空來源，釋放記憶體
+      introVideo.load();
+      introVideo.style.display = "none";
+  }
+  
   introContainer && (introContainer.style.display = "none");
 
   arScene.style.display = "block";
   cameraOverlay.style.display = "flex";
-
-  blackoutOff(); // 鏡頭出現前一定先退黑幕
-
-  if (cameraFade) {
-    cameraFade.style.display = "block";
-    cameraFade.classList.remove("show");
-    requestAnimationFrame(() => cameraFade.classList.add("show"));
-  }
-
+  
+  blackoutOff();
   setTimeout(startScanSequence, 2000);
 }
 
@@ -260,7 +266,7 @@ let scanTimer;
 
 function startScanSequence() {
   console.log("開始 15 秒掃描序列...");
-  
+
   const scanMusic = document.getElementById("scan-music");
   if (scanMusic) {
     scanMusic.currentTime = 0;
@@ -317,27 +323,38 @@ function startScanSequence() {
   scanTimer = setInterval(() => {
     timeLeft--;
     
-    if (timeLeft <= 0) {
-      // 停止所有計時器
-      clearInterval(scanTimer);
-      clearInterval(faceInterval);
-      clearInterval(scanLineInterval);
-      
-      // 隱藏掃描層
-      scanOverlay.style.display = "none";
-      scanOverlay.classList.remove("glitch-active");
-      
-      if (scanMusic) {
-        scanMusic.pause();
-        scanMusic.currentTime = 0;
-      }
+  if (timeLeft <= 0) {
+    clearInterval(scanTimer);
+    clearInterval(faceInterval);
+    clearInterval(scanLineInterval);
 
-      console.log("15秒時間到，自動跳轉...");
-      showPreRatingTypewriter(); // 執行下一個動作
-    } else {
-      scanCountdown.textContent = timeLeft;
+    // 1. 🔊 立即關閉音效
+    const scanMusic = document.getElementById("scan-music");
+    if (scanMusic) { scanMusic.pause(); scanMusic.currentTime = 0; }
+
+    // 2. 🧹 清空螢幕（最重要！）：把所有特效、文字全部瞬間藏起來
+    const scanOverlay = document.getElementById("scan-overlay");
+    if (scanOverlay) {
+        // 直接用 display none 確保螢幕上「只有」最底層的攝像頭 Video
+        scanOverlay.style.display = "none"; 
     }
-  }, 1000); // 每一秒跑一次
+
+  // 3. ⏳ 強制停頓 200 毫秒（這是快門緩衝）
+    // 給瀏覽器時間把上面的 UI 刪掉，讓 video 畫面穩定下來
+    setTimeout(() => {
+        
+        console.log("📸 準備擷取純淨人臉影像...");
+        autoCaptureUser(); // 🟢 就在這個瞬間按快門！
+
+        // 4. 拍完照後，再進入第二段打字機
+        showPreRatingTypewriter(); 
+        
+    }, 200); // 200ms 是安全時間，肉眼看不出來，但對程式來說很久
+
+    } else {
+        scanCountdown.textContent = timeLeft;
+    }
+}, 1000);
 }
 // ===============================
 // 第二段 打字機
@@ -376,207 +393,142 @@ function startTypewriter2() {
   }, 45);
 }
 
+// ...前面的代碼保持不變...
+
 function showPreRatingTypewriter() {
-  console.log("進入 showPreRatingTypewriter...");
+    console.log("進入 showPreRatingTypewriter...");
+    hideAll();
 
-  // ✅ 修正點：在這裡重新獲取 DOM，或者直接用 $("#scan-overlay")
-  const scanOverlay = document.getElementById("scan-overlay");
-  if (scanOverlay) scanOverlay.style.display = "none";
+    const type2Screen = document.getElementById("typewriter2-screen");
+    if (type2Screen) {
+        type2Screen.style.display = "block";
+        playTVOpen(type2Screen);
+        startTypewriter2();
+    }
 
-  // 確保畫面乾淨
-  hideAll();
+    // --- 進度條邏輯 ---
+    const box2 = document.getElementById("loading2-box");
+    const bar2 = document.getElementById("progress2-bar");
+    const text2 = document.getElementById("progress2-text");
+    if (box2 && bar2 && text2) {
+        box2.style.display = "block";
+        let p = 0;
+        const t = setInterval(() => {
+            p++;
+            bar2.style.width = p + "%";
+            text2.textContent = p + "%";
+            if (p >= 100) clearInterval(t);
+        }, 50);
+    }
 
-  // 播放電視開啟效果
-  playTVOpen(type2Screen);
-  startTypewriter2();
+    setTimeout(async () => {
+        // 🎲 1. 隨機選底圖
+        const scoreOptions = ["image/score-01.jpg", "image/score-02.jpg", "image/score-03.jpg"];
+        const selectedBG = scoreOptions[Math.floor(Math.random() * scoreOptions.length)];
+        const ratingBgEl = document.getElementById("rating-bg");
+        if (ratingBgEl) ratingBgEl.src = selectedBG;
 
-  /* ⭐ 第二次 loading 設定 */
-  const box2  = document.getElementById("loading2-box");
-  const bar2  = document.getElementById("progress2-bar");
-  const text2 = document.getElementById("progress2-text");
+        // 🎬 2. 顯示容器
+        const ratingOverlay = document.getElementById('rating-overlay');
+        if (ratingOverlay) {
+            ratingOverlay.style.display = "flex";
+            ratingOverlay.style.opacity = "1";
+        }
+        blackoutOff();
 
-  if (box2 && bar2 && text2) {
-    box2.style.display = "block";
-    bar2.style.width = "0%";
-    text2.textContent = "0%";
+        // 📸 3. 裁切與畫五官到畫布上
+        const faceData = localStorage.getItem("user_captured_photo");
+        if (faceData) {
+            const faceImg = new Image();
+            faceImg.src = faceData;
+            await new Promise(r => faceImg.onload = r);
 
-    let p = 0;
-    const t = setInterval(() => {
-      p++;
-      bar2.style.width = p + "%";
-      text2.textContent = p + "%";
-      if (p >= 30) clearInterval(t);
-    }, 120);
-  }
+            const featureSettings = [
+                { id: 'crop-eye', s: [450, 400, 200, 150] },
+                { id: 'crop-nose', s: [480, 600, 150, 150] },
+                { id: 'crop-mouth', s: [450, 800, 200, 150] }
+            ];
 
-  // 設定 20 秒後關閉打字機並顯示評分表
-  setTimeout(() => {
-    console.log("打字機時間結束，準備顯示評分表...");
-    playTVOff(type2Screen, () => {
-      blackoutOn();
+            featureSettings.forEach(f => {
+                const canvas = document.getElementById(f.id);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = canvas.offsetHeight;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(faceImg, f.s[0], f.s[1], f.s[2], f.s[3], 0, 0, canvas.width, canvas.height);
+                }
+            });
 
-      setTimeout(() => {
-        ratingOverlay.style.display = "flex";
-        ratingOverlay.classList.remove("fax-print");
-        void ratingOverlay.offsetWidth;
-        ratingOverlay.classList.add("fax-print");
-
-        const faxSound = document.getElementById("fax-sound");
-        if (faxSound) {
-          faxSound.currentTime = 0;
-          faxSound.volume = 0.85;
-          faxSound.play().catch(()=>{});
+            const userImg = document.getElementById('user-captured-photo');
+            if (userImg) userImg.src = faceData;
         }
 
-        setTimeout(() => blackoutOff(), 200);
-        overlayStep = 2;
+        // 🎬 4. 結束打字機，啟動「合成與跳轉」定時器
+        playTVOff(type2Screen, () => {
+            blackoutOff();
+            const blackoutEl = document.getElementById("tv-blackout");
+            if (blackoutEl) blackoutEl.style.display = "none";
 
-        // ⭐ 14 秒後跳轉到 step3.html
-        setTimeout(() => {
-          console.log("跳轉至 step3.html");
-          window.location.href = "step3.html";
-        }, 8000);
+            showFinalRating();
 
-      }, 280);
-    });
-  }, 5000); 
+            const faxSound = document.getElementById("fax-sound");
+            if (faxSound) faxSound.play().catch(() => {});
+
+            console.log("📍 評分表已顯示，10秒後執行合成並跳轉...");
+
+            // 📸 核心邏輯：在跳轉前執行合成存檔
+            setTimeout(async () => {
+                console.log("🚀 開始執行合成存檔程序...");
+                
+                try {
+                    // 執行合成函式（確保 generateFinalScoreImage 內部沒有報錯）
+                    await generateFinalScoreImage();
+                } catch (err) {
+                    console.error("❌ 合成失敗，但仍嘗試跳轉:", err);
+                }
+
+                // 移除 if (window.location.href.includes("step2")) 
+                // 直接執行跳轉，避免因為網址名稱問題卡死
+                console.log("🚀 跳轉至 step3.html");
+                window.location.href = "step3.html";
+                
+            }, 10000); 
+        });
+
+    }, 6000); 
 }
 
+// ==========================================
+// 🎨 核心合成函式：把螢幕上所有元素壓扁成一張圖
+// ==========================================
+async function generateFinalScoreImage() {
+    console.log("🎨 正在截取評分結果...");
+    
+    const target = document.querySelector(".score-page"); // 🟢 確保這是你評分頁的最外層容器
+    if (!target) return;
 
-// ===============================
-// 06 POPUP：按讚 / OFF
-// ===============================
-function goLowScoreNext() {
+    // 給瀏覽器一點時間（例如 500ms）確保渲染完成
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-  stopHandsCamera();
+    try {
+        const canvas = await html2canvas(target, {
+            useCORS: true,           // 🟢 必須開啟，否則跨域圖片會變黑
+            allowTaint: true,
+            backgroundColor: "#000",
+            width: 1080,             // 🟢 固定寬度避免位移
+            height: 1920,
+            scale: 1
+        });
 
-  lowScoreOverlay.style.display = "none";
-  ratingOverlay.style.display   = "none";
-
-  window.location.href = "makeup.html";
+        const finalData = canvas.toDataURL('image/jpeg', 0.9);
+        localStorage.setItem("photo_01", finalData); 
+        console.log("✅ photo_01 截圖成功");
+    } catch (err) {
+        console.error("photo_01 截圖失敗:", err);
+    }
 }
-
-function goLowScoreOff() {
-
-  stopHandsCamera();
-
-  lowScoreOverlay.style.display = "none";
-  photoOffOverlay.style.display = "flex";
-
-  overlayStep = 5;
-}
-
-btnLowNext && (btnLowNext.onclick = goLowScoreNext);
-btnLowOff  && (btnLowOff.onclick  = goLowScoreOff);
-btnEndOff  && (btnEndOff.onclick  = () => location.reload());
-
-
-
-// ===============================
-// MediaPipe Hands
-// ===============================
-const hands = new Hands({
-  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`,
-});
-
-hands.setOptions({
-  maxNumHands: 1,
-  modelComplexity: 0,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.5,
-});
-
-let thumbUpFrames   = 0;
-let thumbDownFrames = 0;
-let lastThumbAction = 0;
-
-const HOLD_NEED   = 2;
-const COOLDOWN_MS = 1200;
-
-function isThumbUp(lm){ return lm[4].y < lm[5].y - 0.02; }
-function isThumbDown(lm){ return lm[4].y > lm[5].y + 0.02; }
-
-function handleHandsResults(results) {
-
-  if (overlayStep !== 3) return;
-
-  if (!results.multiHandLandmarks?.length) {
-    thumbUpFrames = thumbDownFrames = 0;
-    return;
-  }
-
-  const lm  = results.multiHandLandmarks[0];
-  const now = performance.now();
-
-  const up   = isThumbUp(lm);
-  const down = isThumbDown(lm);
-
-  if (up)  { thumbUpFrames++;  thumbDownFrames = 0; }
-  else if (down){ thumbDownFrames++; thumbUpFrames = 0; }
-  else     { thumbUpFrames = thumbDownFrames = 0; }
-
-  if (now - lastThumbAction < COOLDOWN_MS) return;
-
-  if (thumbUpFrames >= HOLD_NEED) {
-    lastThumbAction = now;
-    goLowScoreNext();
-    return;
-  }
-
-  if (thumbDownFrames >= HOLD_NEED) {
-    lastThumbAction = now;
-    goLowScoreOff();
-  }
-}
-
-hands.onResults(handleHandsResults);
-
-
-
-// ===============================
-// Hands Camera
-// ===============================
-let handsCamera = null;
-let handsCameraStarted = false;
-
-function startHandsCamera() {
-
-  if (handsCameraStarted) return;
-  handsCameraStarted = true;
-
-  navigator.mediaDevices.getUserMedia({ video:true })
-  .then(stream => {
-
-    handsVideo.srcObject = stream;
-
-    handsCamera = new Camera(handsVideo, {
-      onFrame: async () => {
-        if (!handsVideo.videoWidth) return;
-        await hands.send({ image: handsVideo });
-      },
-      width:1080,
-      height:1920
-    });
-
-    handsCamera.start();
-  });
-}
-
-function stopHandsCamera() {
-
-  if (!handsCameraStarted) return;
-  handsCameraStarted = false;
-
-  try { handsCamera?.stop(); } catch{}
-
-  if (handsVideo?.srcObject) {
-    handsVideo.srcObject.getTracks().forEach(t=>t.stop());
-    handsVideo.srcObject = null;
-  }
-}
-// ===============================
-// INIT - 初始化與聲音解鎖
-// ===============================
+// INIT - 初始化與聲音解鎖//
 window.addEventListener("DOMContentLoaded", () => {
   hideAll();
 
@@ -650,3 +602,72 @@ window.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ script ready（等待使用者點擊圖片或按 Enter 開啟聲音）");
 });
+
+//自動拍照與評分表顯示邏輯//
+
+function autoCaptureUser() {
+    console.log("📸 執行拍照程序...");
+    // 找出攝影機 Video (避開待機影片)
+    const allVideos = document.querySelectorAll('video');
+    let video = null;
+    allVideos.forEach(v => {
+        if (v.id !== "intro-video" && v.id !== "mk-video") { video = v; }
+    });
+    if (!video) video = document.querySelector('video');
+
+    const canvas = document.getElementById('capture-canvas');
+    if (!video || !canvas || video.videoWidth === 0) return;
+
+    const ctx = canvas.getContext('2d');
+
+    // 🟢 修正：提高解析度至 1130x1500，這樣在 4K 電視上才清楚
+    canvas.width = 1130;
+    canvas.height = 1500;
+
+    const sw = video.videoWidth;
+    const sh = video.videoHeight;
+    const targetRatio = 1130 / 1500;
+    let dx, dy, dw, dh;
+
+    if (sw / sh > targetRatio) {
+        dw = sh * targetRatio; dh = sh;
+        dx = (sw - dw) / 2; dy = 0;
+    } else {
+        dw = sw; dh = sw / targetRatio;
+        dx = 0; dy = (sh - dh) / 2;
+    }
+
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1); // 鏡像處理
+    ctx.drawImage(video, dx, dy, dw, dh, 0, 0, 1130, 1500);
+    ctx.restore();
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    localStorage.setItem("user_captured_photo", dataUrl);
+    
+    const targetImg = document.getElementById('user-captured-photo');
+    if (targetImg) targetImg.src = dataUrl;
+    console.log("✅ 高解析度影像已存入");
+}
+
+function showFinalRating() {
+    console.log("🛠️ 執行 showFinalRating (僅顯示)...");
+    const ratingOverlay = document.getElementById('rating-overlay');
+    // 注意：如果你希望最後看到的是合成後的「整張圖」，我們改抓 rating-bg 這個元素
+    const ratingBgImg = document.getElementById('rating-bg'); 
+    const finalScoreData = localStorage.getItem('photo_01');
+
+    blackoutOff(); 
+
+    if (ratingOverlay) {
+        ratingOverlay.style.setProperty('display', 'flex', 'important');
+        ratingOverlay.style.zIndex = "10000"; 
+        ratingOverlay.style.opacity = "1";
+    }
+
+    if (finalScoreData && ratingBgImg) {
+        ratingBgImg.src = finalScoreData; // 把合成好的圖直接換掉原本的底圖
+        console.log("✅ 最終合成影像已顯示於 rating-bg");
+    }
+}

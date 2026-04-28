@@ -12,18 +12,21 @@ html, body {
   overflow: hidden;
   background-color: black;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
 
+  --scale-factor: 1 !important; /* 強制重置縮放係數 */
+  transform: none !important;
+}
 /* 9:16 主視窗 */
 #ar-viewport {
-  width: 1080px;
-  height: 1920px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(var(--scale-factor, 1));
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: none !important;
   overflow: hidden;
   background-color: black;
+  z-index: 0;
 }
 
 /* 讓 overlay 都吃滿畫布 */
@@ -189,24 +192,27 @@ html, body {
 /* ===============================
    AR Scene（MindAR）
 =============================== */
-#ar-scene {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: none; /* 一開始先關掉 */
-  z-index: 1;
+/* 強制將被推開的攝影機拉回原位 */
+#ar-scene, 
+.a-canvas, 
+video {
+  transform: scaleX(-1) !important;
+  position: fixed !important;
+  left: 0 !important; /* 👈 關鍵：強制覆蓋 -1086px，歸零 */
+  top: 0 !important;
+  width: 100vw !important;/* 👈 寬度改為滿版 */
+  height: 100vh !important;/* 👈 高度改為滿版 */
+  z-index: 0 !important;
 }
 
-/* A-Frame canvas 強制滿版 */
-#ar-scene canvas,
-.a-canvas {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  z-index: 1 !important;
+/* 確保父容器不會限制到 A-Frame */
+#ar-viewport {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: none; /* 移除 translate(-50%, -50%)，因為我們已經用全螢幕佈局 */
 }
 #typewriter-text{
   position:absolute;
@@ -281,14 +287,26 @@ html, body {
 =============================== */
 /* 確保掃描層可以顯示 */
 #scan-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  display: none; /* 由 JS 控制顯示 */
-  z-index: 1000; /* 提高層級，確保在所有 UI 之上 */
-  background: rgba(0, 0, 0, 0.1); /* 稍微有點暗色背景 */
-  pointer-events: none;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100; /* 提高層級，確保在所有 UI 之上 */
+  background: transparent
 }
 
+canvas.a-canvas {
+    z-index: 1 !important; /* 確保它在最底層 */
+}
+#ar-viewport {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 0;
+}
 #scan-bg {
   width: 100%;
   height: 100%;
@@ -403,110 +421,110 @@ html, body {
 /* ===============================
    05 評分表 + 06 跳出視窗1
 =============================== */
-#rating-overlay,
-#low-score-overlay {
-  display: none;
+#rating-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: black;
+  display: none;    /* 初始隱藏 */
   justify-content: center;
   align-items: center;
+  z-index: 9999;     /* 確保高於攝影機層 */
+}
+#rating-bg {
+    height: 100vh; /* 依照電視高度鋪滿 */
+    width: auto;
+    position: relative;
+    display: block;
+    z-index: 1; /* 底圖在下層 */
+}
+/* 35x46 照片框 */
+#user-photo-container {
+    position: absolute;
+    /* 這裡的 top/left 是相對於 100vh 高度的比例 */
+    top: 11.5%; 
+    left: 7%; 
+
+    width: 113mm; 
+    height: 150mm; 
+
+    z-index: 100;      /* 確保在底圖之上 */
+    overflow: hidden;
+
+    /* 🔴 關鍵排查：先加一個鮮豔的邊框，看看它有沒有疊在正確的位置 */
+    border: 3px !important; 
+    background-color: rgba(255, 0, 0, 0.2) !important;
+    
+    display: block !important;
+}
+#user-captured-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;   /* 確保圖片顯示 */
+}
+/* 設定五官框的共同樣式 */
+.feature-box {
+    position: absolute !important;
+    z-index: 200 !important;
+    background-color: transparent !important; /* 👈 改回透明 */
+    border: none !important; /* 👈 如果不需要框線了就拿掉 */
+    pointer-events: none;
+}
+.crop-overlay {
+    position: absolute;
+    border: 1px solid rgba(0, 255, 255, 0.5); /* 暫時顯示框線方便你對位 */
+    background-size: cover;
 }
 
-#rating-overlay { z-index: 20; }
-#low-score-overlay { z-index: 21; }
+/* 根據你的截圖，對準右側那三個梯形連結的框 */
+#crop-eye { top: 180px; left: 630px; width: 240px; height: 150px; }
+#crop-nose { top: 410px; left: 757px; width: 240px; height: 150px; }
+#crop-mouth { top: 636px; left: 683px; width: 240px; height: 150px; }
 
-#rating-overlay img,
-#low-score-overlay img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-/* 05 / 07 共用按鈕樣式：右下白框 */
-.btn-main,
-.btn-outline-white {
+/* 統一設定 HUD 疊加圖的樣式 */
+.hud-deco {
   position: absolute;
-  right: 50px;
-  bottom: 50px;
-  padding: 14px 36px;
-  border: 2px solid #fff;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  font-size: 32px;
-  letter-spacing: 3px;
-  cursor: pointer;
-  outline: none;
+  z-index: 150; /* 確保在底圖和五官畫布之上，但可能需要低於左側照片容器 */
+  pointer-events: none; /* 防止干擾點擊 */
 }
 
-.btn-main:hover,
-.btn-outline-white:hover {
-  background: rgba(255,255,255,0.12);
+/* 🟢 個別微調位置和大小 */
+
+/* 01.png 放在左側體驗者容貌照片上 */
+#hud-face {
+  top: 40px; /* 對齊照片容器頂部 */
+  left:-180px; /* 對齊照片容器左側 */
+  width: 1000px; /* 對齊照片容器寬度 */
+  height: 900px; /* 對齊照片容器高度 */
+  z-index: 300; /* 確保在照片 container 裡面，但高於照片 img */
 }
 
-/* 06 隱藏按鈕 click 區 */
-#low-score-overlay .choice-btn,
-#popup2-overlay .choice-btn,
-#popup3-overlay .choice-btn {
-  position: absolute;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  z-index: 9999;
+/* 02.png 放在眼睛裁切畫布上 */
+#hud-eye {
+  top: 160px; /* 對齊 #crop-eye 的 top */
+  left: 540px; /* 對齊 #crop-eye 的 left */
+  width: 200px; /* 對齊 #crop-eye 的 width */
+  height: 120px; /* 對齊 #crop-eye 的 height */
+  z-index: 300
 }
 
-/* OFF / NEXT 按鈕 */
-.choice-off {
-  left: 190px;
-  top: 1355px;
-  width: 300px;
-  height: 120px;
-}
-.choice-next {
-  left: 590px;
-  top: 1355px;
-  width: 300px;
-  height: 120px;
+/* 03.png 放在鼻子裁切畫布上 */
+#hud-nose {
+  top: 360px; /* 對齊 #crop-nose 的 top */
+  left: 900px; /* 對齊 #crop-nose 的 left */
+  width: 170px; /* 對齊 #crop-nose 的 width */
+  height: 150px; /* 對齊 #crop-nose 的 height */
+  z-index: 300
 }
 
-/* 中央巨大倒數 */
-.countdown-center {
-  position: absolute;
-  left: 50.2%;
-  top: 39.7%;
-  transform: translate(-50%, -50%);
-  font-size: 180px;
-  font-weight: 900;
-  color: #ffffff;
-  text-shadow: 0 0 12px rgba(0,0,0,0.8), 0 0 30px rgba(0,0,0,0.9);
-  letter-spacing: 10px;
+/* 04.png 放在嘴巴裁切畫布上 */
+#hud-mouth {
+  top: 570px; /* 對齊 #crop-mouth 的 top */
+  left: 610px; /* 對齊 #crop-mouth 的 left */
+  width: 200px; /* 對齊 #crop-mouth 的 width */
+  height: 120px; /* 對齊 #crop-mouth 的 height */
+  z-index: 300 
 }
-
-/* ===============================
-   08 / 09 跳出視窗
-=============================== */
-#popup2-overlay,
-#popup3-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 9999;
-  display: none;
-  pointer-events: auto;
-}
-
-#popup2-overlay img,
-#popup3-overlay img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-/* ===============================
-   美妝 / 文字 濾鏡倒數數字
-=============================== */
-
 
 /* ===============================
    濾鏡選擇畫面（濾鏡一 / 濾鏡二共用外框）
@@ -696,104 +714,7 @@ html, body {
   object-fit: cover;
 }
 
-/* ===============================
-   07：拍照打卡 overlay（即時截圖）
-=============================== */
-#photo-finish-overlay {
-  position: absolute;
-  inset: 0;
-  display: none; /* JS 會改成 flex */
-  justify-content: center;
-  align-items: center;
-} /* ✅ 這個 } 你原本漏掉，必須要有 */
 
-#photo-finish-overlay img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-#ui-photo-finish { z-index: 1; }
-
-#ui-photo-frame {
-  z-index: 9999;
-  pointer-events: none;
-}
-
-/* 右下角兩顆按鈕 */
-#photo-finish-overlay #btn-continue {
-  position: absolute;
-  right: 62px;
-  bottom: 45px;
-  padding: 14px 55px;
-  font-size: 32px;
-  border-radius: 0;
-  border: 2px solid #fff;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  cursor: pointer;
-  z-index: 3;
-}
-
-#photo-finish-overlay #btn-end {
-  position: absolute;
-  right: 62px;
-  bottom: 50px;
-  padding: 10px 30px;
-  font-size: 28px;
-  border-radius: 0;
-  border: 2px solid #fff;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  cursor: pointer;
-  z-index: 3;
-}
-
-/* ===============================
-   07-2：OFF 走的打卡畫面
-=============================== */
-#photo-off-overlay {
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-#photo-off-overlay img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-#btn-end-off {
-  position: absolute;
-  right: 60px;
-  bottom: 47px;
-  padding: 14px 87px;
-  font-size: 32px;
-  border-radius: 0;
-  border: 2px solid #fff;
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
-  z-index: 41;
-}
-
-
-/* ===============================
-   IG 發文畫面外層
-=============================== */
-#post-overlay {
-  position: fixed;   /* 🔥 覆蓋整個螢幕 */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: black; /* 🔥 防止透出鏡頭 */
-  z-index: 9999;     /* 🔥 最頂層 */
-  display: none;     /* 預設關閉 */
-}
 /* ===============================
    TV 開機 / 關機（套用在 typeScreen / type2Screen）
 =============================== */
@@ -847,400 +768,6 @@ html, body {
   }
 }
 
-/* 07 拍照打卡：繼續體驗 + 結束體驗按鈕 */
-#photo-finish-overlay #btn-continue,
-#photo-finish-overlay #btn-end {
-  position: absolute;
-  right: 62px;
-  bottom: 50px;
-  padding: 14px 52px;
-  font-size: 32px;
-  border-radius: 0;
-  border: 2px solid #fff;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  cursor: pointer;
-  z-index: 22;
-}
-
-#btn-score-done:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-
-#photo-finish-overlay #btn-continue {
-  bottom: 45px; /* 上面那顆 */
-}
-
-#photo-finish-overlay #btn-end {
-  bottom: 50px;  /* 右下角那顆 */
-}
-
-/* IG 發文頁：結束體驗按鈕 */
-.ig-phone #btn-end-post {
-  position: absolute;
-  right: 50px;
-  bottom: 50px;
-  padding: 10px 30px;
-  font-size: 28px;
-  border-radius: 0;
-  border: 2px solid #fff;
-  background: rgba(0, 0, 0, 0.88);
-  color: #fff;
-  cursor: pointer;
-  z-index: 100;
-}
-/* IG 發文頁整頁底圖：文字-08 */
-#post-overlay {
-  position: fixed;        /* 通常你本來就有，如果有就不用重複寫 */
-  inset: 0;
-  display: none;          /* 保持原本的顯示控制就好 */
-  justify-content: center;
-  align-items: center;
-}
-
-#post-overlay .ig-page-bg {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  object-fit: cover;      /* 不變形鋪滿 */
-  pointer-events: none;   /* 不要擋到按鈕 */
-  z-index: 0;
-}
-
-/* 讓 IG 內容蓋在文字-08 上面 */
-#post-overlay .ig-phone,
-#btn-end-post {
-  position: relative;
-  z-index: 1;
-}
-
-
-/* ===============================
-   IG Phone 內容（Fake Instagram UI）
-=============================== */
-.ig-phone {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  margin: 0 auto;
-  overflow-y: scroll;
-  background: black;
-}
-
-/* 顆粒 */
-.ig-phone::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url("image/text3.png") repeat;
-  background-size: cover;
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: -2;
-}
-
-/* 漂浮的 文字-08 背景 */
-.ig-phone::after {
-  content: "";
-  position: absolute;
-  inset: -60px;
-  background: url("image/text2.png") center/cover no-repeat;
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: -1;
-  animation: floatBG 14s ease-in-out infinite;
-}
-
-/* 捲軸隱藏 */
-.ig-phone::-webkit-scrollbar { display: none; }
-.ig-phone {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* 上方 bar */
-.top-bar {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 10px;
-  font-size: 30px;
-  font-weight: bold;
-  color: #fff;
-}
-#post-overlay {
-  position: relative;
-  overflow: hidden;
-}
-
-.post-bg-overlay {
-  position: absolute;
-  z-index: 1;            /* 在最底層（IG 內容會疊在上面） */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;     /* 不變形填滿 */
-  opacity: 1;            /* 若想淡一點可改 0.5~0.8 */
-  pointer-events: none;  /* 不要擋人按按鈕 */
-}
-
-/* IG 內容往上疊 */
-#post-overlay .ig-phone,
-#btn-end-post {
-  position: relative;
-  z-index: 5;
-}
-
-/* =========================
-   STORY
-========================= */
-.stories {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-  gap: 40px;
-}
-
-.story {
-  position: relative;
-  width: 220px;
-  text-align: center;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.story-circle {
-  position: relative;
-  width: 180px;
-  height: 180px;
-  margin: 0 auto;
-  margin-top: 20px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 0.5px solid #fff;
-}
-
-.story-circle img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: opacity .15s linear;
-  pointer-events: none;
-}
-
-.img-normal { opacity: 1; }
-.img-hover  { opacity: 0; }
-
-.story:hover .img-normal { opacity: 0; }
-.story:hover .img-hover  { opacity: 1; }
-
-.story p {
-  font-size: 25px;
-  margin-top: 16px;
-  color: #fff;
-}
-
-.story .hover-tag {
-  position: absolute;
-  top: -18px;
-  right: 0;
-  background: #ff2d2d;
-  color: #fff;
-  font-size: 27px;
-  padding: 10px 18px;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: .2s ease;
-  z-index: 20;
-  pointer-events: none;
-}
-
-.story:hover .hover-tag {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* =========================
-   貼文
-========================= */
-.post {
-  position: relative;
-  z-index: 2;
-  margin-top: 40px;
-  width: 100%;
-}
-
-.post-header {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  font-size: 30px;
-  color: #fff;
-}
-
-.post-header img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin: 20px;
-  border: 0.5px solid #fff;
-}
-
-.post-img-wrap {
-  position: relative;
-  width: 100%;
-  height: 820px;
-  aspect-ratio: 6 / 5;
-  overflow: hidden;
-}
-
-.post-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  object-position: 40% 40%;
-}
-/* 讓 ig-phone 當作定位的父層 */
-.ig-phone {
-  position: relative;
-  width: 150%;
-  height: 100%;
-  
-}
-
-/* IG 畫面右下角的結束體驗按鈕 */
-.btn-end-ig {
-  position: absolute;
-  right: 5px;     /* 想靠邊就調這兩個數字 */
-  bottom: -1550px;
-}
-#btn-end-post {
-  display: none !important;
-}
-
-/* 當機 21 分 */
-.glitch-score {
-  position: absolute;
-  top: 700px;
-  right: 360px;
-  font-size: 80px;
-  font-weight: 900;
-  color: rgb(240, 240, 240);
-  opacity: 0.7;
-  letter-spacing: 6px;
-  pointer-events: none;
-  z-index: 10;
-  text-shadow:
-    2px 0 rgb(120, 120, 120),
-    -2px 0 rgb(28, 28, 28);
-  animation: glitchFlash 1s steps(2) infinite;
-}
-
-.actions {
-  display: flex;
-  padding: 10px;
-  font-size: 60px;
-  color: #fff;
-}
-
-.actions span {
-  margin-right: 20px;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.likes-count {
-  font-size: 36px;
-  padding: 8px 12px;
-  color: #fff;
-}
-
-/* 留言列表 */
-.comments {
-  padding: 12px;
-  font-size: 26px;
-  line-height: 40px;
-  color: #fff;
-}
-
-.comments p {
-  margin: 10px 0;
-  word-break: break-word;
-}
-
-/* 留言輸入框 */
-.comment-box {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #444;
-  position: relative;
-  z-index: 2;
-}
-
-.comment-box input {
-  flex: 1;
-  background: none;
-  border: none;
-  border-bottom: 1px solid #555;
-  color: white;
-  padding: 9px;
-  outline: none;
-  font-size: 30px;
-}
-
-.comment-box button {
-  margin-left: 12px;
-  background: none;
-  border: none;
-  color: #0095f6;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 30px;
-}
-
-/* ===============================
-   動畫
-=============================== */
-@keyframes glitchFlash {
-  0%   { transform: translate(0,0); opacity: 1; }
-  20%  { transform: translate(-3px,2px); }
-  40%  { transform: translate(3px,-2px); }
-  60%  { transform: translate(-2px,1px); }
-  80%  { transform: translate(2px,-1px); }
-  100% { transform: translate(0,0); opacity: 0; }
-}
-
-@keyframes floatBG {
-  0%   { transform: translate(0,0); }
-  25%  { transform: translate(-30px,10px); }
-  50%  { transform: translate(30px,-10px); }
-  75%  { transform: translate(-20px,-20px); }
-  100% { transform: translate(0,0); }
-}
-
-/* === 評分表右下角同款：白框按鈕 === */
-.btn-outline-white{
-  padding: 10px 24px;
-  border: 1px solid #ffffff;
-  background: rgba(0,0,0,0.7);
-  color:#ffffff;
-  font-size: 26px;
-  letter-spacing: 3px;
-  font-weight: 600;
-  cursor: pointer;
-}
 
 /* ===============================
    Z-INDEX SYSTEM (FINAL)
@@ -1335,4 +862,40 @@ html, body {
   40%  { transform: translateX(2px); }
   80%  { transform: translateX(-1px); }
   100% { transform: translateX(0); }
+}
+/* ===============================
+   AR Scene & Camera (修正版)
+=============================== */
+/* 🟢 只針對攝影機進行鏡像，避開開場影片 */
+video:not(#intro-video), 
+.a-canvas {
+  transform: scaleX(-1) !important; /* 保持鏡像 */
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: cover !important;
+  z-index: 0 !important;
+}
+
+/* 🟢 開場影片專屬設定：絕對不翻轉 */
+#intro-video {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: cover !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 100 !important; /* 確保它在最前面 */
+}
+
+#intro-container {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  transform: none !important;
 }

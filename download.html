@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MODEL1 照片下載</title>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 500px; margin: 20px auto; }
+        .item { background: #111; padding: 10px; border: 1px solid #333; aspect-ratio: 9/16; overflow: hidden; }
+        .photo { width: 100%; height: 100%; object-fit: cover; }
+        h2 { font-weight: 300; letter-spacing: 2px; }
+        p { font-size: 14px; opacity: 0.7; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <h2>MODEL1_下載您的照片</h2>
+    <div class="grid" id="downloadGrid">
+        <p style="grid-column: span 2;">正在讀取雲端照片...</p>
+    </div>
+    <p>— 長按圖片即可儲存至手機 —</p>
+
+    <script>
+    window.onload = async () => {
+        // ⚠️ 這是最關鍵的地方，明天如果換了 Wi-Fi，記得確認 IP
+        const myLocalIP = "172.20.10.5"; 
+        const grid = document.getElementById('downloadGrid');
+        
+        try {
+            // 1. 先嘗試抓取清單
+            const response = await fetch(`http://${myLocalIP}:8080/list`);
+            
+            if (!response.ok) throw new Error("伺服器回應異常");
+            
+            const data = await response.text();
+            // 過濾掉空字串並反轉陣列（讓最新拍的照片排在最前面）
+            const fileNames = data.split(',').filter(n => n).reverse();
+            
+            grid.innerHTML = ""; // 清空載入中文字
+
+            if (fileNames.length === 0) {
+                grid.innerHTML = "<p style='grid-column: span 2; padding: 20px;'>目前清單是空的喔！<br>請先在電腦上點擊「確認列印」。</p>";
+                return;
+            }
+
+// 2. 渲染圖片 (修正版：加上時間戳記防止緩存)
+fileNames.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    // 在檔名後面加上 ?t= 當前時間，這不會影響伺服器讀檔，但會騙過瀏覽器緩存
+    const cacheBuster = new Date().getTime();
+    div.innerHTML = `<img src="http://${myLocalIP}:8080/downloads/${name}?t=${cacheBuster}" class="photo" alt="您的照片">`;
+    grid.appendChild(div);
+});
+
+        } catch (err) {
+            console.error(err);
+            grid.innerHTML = `
+                <div style="grid-column: span 2; color: #ff5555; padding: 20px;">
+                    <p>❌ 連線失敗</p>
+                    <p style="font-size: 12px; opacity: 0.8;">
+                        1. 請確認手機已連上 <b>GOODMODEL_ZONE</b><br>
+                        2. 請確認電腦防火牆已關閉<br>
+                        3. 目前設定 IP: ${myLocalIP}
+                    </p>
+                </div>
+            `;
+        }
+    };
+</script>
+</body>
+</html>
