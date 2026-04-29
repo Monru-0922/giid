@@ -38,43 +38,56 @@ likeBtn.addEventListener("click", () => {
 });
 
 // -------------------------------
-// 留言功能 (爆炸堆疊版)
+// 🟢 留言功能 (訊息流漂浮版) - 替換原本的爆炸版
 // -------------------------------
 
+// 監聽 Enter 鍵
 commentInput.addEventListener("keydown", e => {
   if (e.key === "Enter" && commentInput.value.trim() !== "") {
-    createLocalExplosion(commentInput.value);
+    createFloatingComment(commentInput.value); // 呼叫新函式
     commentInput.value = "";
   }
 });
 
-function createLocalExplosion(text) {
+// 產生漂浮訊息的函式
+function createFloatingComment(text) {
   if (!commentsList) return;
 
   const el = document.createElement("div");
-  el.className = "exploding-comment";
+  el.className = "floating-comment"; // 對應 CSS 的新 Class
   
-  // 請確認你的圖片檔案放在 image 資料夾，且檔名是 text2.png 或 text2.jpg
   el.innerHTML = `
     <img src="image/text2.png" /> 
     <span><strong>USER</strong> ${text}</span>
   `;
 
+  // 加入容器，CSS 的 flex-direction: column-reverse 會自動由下而上堆疊
   commentsList.appendChild(el);
-  el.offsetHeight; // 強制重繪
 
-  // 設定爆炸物理座標
-  const randomX = Math.floor(Math.random() * 300) - 50;
-  const randomY = Math.floor(Math.random() * 400) + 50;
-  const randomRotate = Math.floor(Math.random() * 20) - 10;
-
-  requestAnimationFrame(() => {
-    el.classList.add("active");
-    el.style.left = `${randomX}px`;
-    el.style.bottom = `${randomY}px`;
-    el.style.transform = `scale(1) rotate(${randomRotate}deg)`;
-  });
+  // 4 秒後自動移除元素，保持頁面效能，確保截圖時不會過重
+  setTimeout(() => {
+    el.remove();
+  }, 4000);
 }
+
+// 🟢 額外加碼：自動噴出讚美留言 (讓畫面不冷清)
+const autoComments = ["這也太精緻了吧！", "模範生實至名歸 ✨", "跪求教學 😍", "質感好棒！", "這個濾鏡太強了...", "美到窒息！"];
+
+function startAutoComments() {
+  const autoInterval = setInterval(() => {
+    // 當倒數剩下 3 秒（準備截圖）時停止產生，避免干擾畫面穩定
+    if (typeof timeLeft !== 'undefined' && timeLeft <= 3) {
+        clearInterval(autoInterval);
+        return;
+    }
+    const randomText = autoComments[Math.floor(Math.random() * autoComments.length)];
+    createFloatingComment(randomText);
+  }, 1500); // 每 1.5 秒自動噴出一則
+}
+
+// 啟動自動留言
+startAutoComments();
+
 
 // ===============================
 // 1. 螢幕適配預覽
@@ -89,13 +102,13 @@ function autoResize() {
 window.addEventListener('resize', autoResize);
 autoResize();
 
+
 // ===============================
 // 3. 截圖、存檔與自動跳轉 (step6.html)
 // ===============================
 
-// 🟢 定義：執行截圖並跳轉的非同步函式
 async function autoCaptureAndRedirect() {
-    const target = document.querySelector(".ig-phone"); // 抓取要拍照的區域
+    const target = document.querySelector(".ig-phone"); 
     if (!target) return;
 
     try {
@@ -111,28 +124,25 @@ async function autoCaptureAndRedirect() {
             scrollY: 0,
         });
 
-        // 將畫面轉為 JPG 並存入資料庫
         const screenshot = canvas.toDataURL("image/jpeg", 0.7);
         localStorage.setItem("photo_04", screenshot);
         
-        // 拍照完成後，給予 1.5 秒緩衝再跳轉
         setTimeout(() => {
-            window.location.href = "step6.html"; // 🟢 目標頁面
+            window.location.href = "step6.html"; 
         }, 1500);
     } catch (err) {
         console.error("截圖失敗:", err);
     }
 }
 
-// 🟢 執行：設定 10 秒倒數計時器
+// 10 秒倒數計時
 let timeLeft = 10; 
 
 const timer = setInterval(() => {
     timeLeft--;
 
-    // 當時間剩下 2 秒時，啟動截圖程式 (預留處理時間)
     if (timeLeft === 2) {
-        clearInterval(timer); // 停止計時器以免重複執行
-        autoCaptureAndRedirect(); // 🟢 正式啟動合併後的函式
+        clearInterval(timer); 
+        autoCaptureAndRedirect(); 
     }
 }, 1000);
