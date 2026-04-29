@@ -40,7 +40,7 @@ html,body{
   display: flex; 
   flex-direction: column; align-items: flex-start;
   width: 70%; 
-  gap: 80px;
+  gap: 60px;
   opacity: 0; 
   transition: opacity 1s;
 }
@@ -215,8 +215,9 @@ html,body{
     }, speed);
   }
 
-  function finish() {
-    localStorage.clear();
+ function finish() {
+    console.log("清理暫存資料中...");
+    localStorage.clear(); // 🔴 執行這行後，所有照片都會從筆電消失
     window.location.href = "index.html";
   }
 </script>

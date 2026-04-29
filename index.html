@@ -8,6 +8,8 @@
   <!-- A-Frame / MindAR / MediaPipe -->
  <script src="aframe.min.js"></script>
  <script src="mindar-face-aframe.prod.js"></script> 
+ <!-- 🟢 必須加入這行，程式才能執行截圖功能 -->
+ <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
   <!-- MediaPipe（臉 + 手） -->
  <script src="camera_utils.js"></script>
@@ -210,7 +212,7 @@
   </div>
   
 </div>
-<audio id="fax-sound" src="sound/fax.mp3" preload="auto"></audio>
+
 
     <!-- ===============================
          02 對準框（主攝影畫面框）

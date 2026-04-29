@@ -465,34 +465,28 @@ function showPreRatingTypewriter() {
         }
 
         // 🎬 4. 結束打字機，啟動「合成與跳轉」定時器
-        playTVOff(type2Screen, () => {
+        // 🎬 4. 結束打字機
+        playTVOff(type2Screen, async () => { // 🟢 這裡要加 async
             blackoutOff();
-            const blackoutEl = document.getElementById("tv-blackout");
-            if (blackoutEl) blackoutEl.style.display = "none";
-
             showFinalRating();
 
-            const faxSound = document.getElementById("fax-sound");
-            if (faxSound) faxSound.play().catch(() => {});
+            console.log("📍 評分表已顯示，10秒後截圖並跳轉...");
 
-            console.log("📍 評分表已顯示，10秒後執行合成並跳轉...");
-
-            // 📸 核心邏輯：在跳轉前執行合成存檔
             setTimeout(async () => {
-                console.log("🚀 開始執行合成存檔程序...");
+                console.log("🚀 開始合成存檔...");
                 
-                try {
-                    // 執行合成函式（確保 generateFinalScoreImage 內部沒有報錯）
-                    await generateFinalScoreImage();
-                } catch (err) {
-                    console.error("❌ 合成失敗，但仍嘗試跳轉:", err);
-                }
+                // 🟢 重要：確保截圖時 rating-overlay 是顯示的
+                document.getElementById('rating-overlay').style.display = "flex";
 
-                // 移除 if (window.location.href.includes("step2")) 
-                // 直接執行跳轉，避免因為網址名稱問題卡死
-                console.log("🚀 跳轉至 step3.html");
-                window.location.href = "step3.html";
+                // 🟢 關鍵：必須確保 await 執行完畢
+                const success = await generateFinalScoreImage();
                 
+                if (success) {
+                    console.log("🚀 存檔完成，前往 Step 3");
+                    window.location.href = "step3.html";
+                } else {
+                    console.error("❌ 存檔失敗，請檢查控制台紅字");
+                }
             }, 10000); 
         });
 
@@ -505,27 +499,36 @@ function showPreRatingTypewriter() {
 async function generateFinalScoreImage() {
     console.log("🎨 正在截取評分結果...");
     
-    const target = document.querySelector(".score-page"); // 🟢 確保這是你評分頁的最外層容器
-    if (!target) return;
+    // 🟡 修正 1：確保抓取的是包含內容的 wrapper
+    const target = document.getElementById("rating-content-wrapper"); 
+    
+    if (!target) {
+        console.error("❌ 找不到容器，截圖失敗");
+        return false;
+    }
 
-    // 給瀏覽器一點時間（例如 500ms）確保渲染完成
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // 等待一下確保渲染完成
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     try {
         const canvas = await html2canvas(target, {
-            useCORS: true,           // 🟢 必須開啟，否則跨域圖片會變黑
-            allowTaint: true,
+            useCORS: true,
+            allowTaint: false,
             backgroundColor: "#000",
-            width: 1080,             // 🟢 固定寬度避免位移
-            height: 1920,
-            scale: 1
+            width: target.offsetWidth,
+            height: target.offsetHeight,
+            // 🟡 修正 2：scale 改為 1 避免儲存空間爆滿 (QuotaExceededError)
+            scale: 1 
         });
 
-        const finalData = canvas.toDataURL('image/jpeg', 0.9);
+        // 🟡 修正 3：品質稍微降低到 0.7 確保寫入速度與空間
+        const finalData = canvas.toDataURL('image/jpeg', 0.7);
         localStorage.setItem("photo_01", finalData); 
-        console.log("✅ photo_01 截圖成功");
+        console.log("✅ photo_01 截圖成功，長度:", finalData.length);
+        return true;
     } catch (err) {
-        console.error("photo_01 截圖失敗:", err);
+        console.error("❌ photo_01 截圖失敗:", err);
+        return false;
     }
 }
 // INIT - 初始化與聲音解鎖//
