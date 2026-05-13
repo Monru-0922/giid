@@ -34,11 +34,12 @@ html,body{
 /* 🟢 修改後的提示區與 QR 區 */
 #button-area {
   position: absolute; 
-  bottom: 250px; 
+  bottom: 400px; 
   left: 50%;
   transform: translateX(-50%);
   display: flex; 
-  flex-direction: column; align-items: flex-start;
+  flex-direction: column; 
+  align-items: center; /* 🟢 改成 center 會讓 QR Code 在中央 */
   width: 70%; 
   gap: 60px;
   opacity: 0; 
@@ -83,6 +84,7 @@ html,body{
   backdrop-filter: blur(5px);
   animation: pulse 2s infinite ease-in-out;
   cursor: pointer;
+  display: none; /* 預設不顯示，打完字再開啟 */
 }
 
 @keyframes pulse {
@@ -114,14 +116,15 @@ html,body{
   </div>
 
   <div id="button-area">
+    <!--
       <div class="qr-container">
           <div id="qrcode"></div>
           <div class="qr-info-side">
-              <p>掃描 QR Code<br>下載本次體驗全部照片</p>
           </div>
       </div>
+      -->
       <div class="action-info" onclick="finish()">
-          結束體驗並返回首頁 (Enter)
+          按下黑鍵結束體驗
       </div>
   </div>
 </div>
@@ -138,11 +141,10 @@ html,body{
 
     // 2. 打字機內容
     const TEXT = `
-    > 評分完成
-    數據已存入模範生資料庫
-    _
-    正在為您準備數位下載路徑
-    歡迎您再次使用本系統...`;
+    > 
+    相片列印中請稍後
+    ＿
+    按下［黑色按鍵］即可結束體驗`;
     
     const el = document.getElementById("type-text");
     const btnArea = document.getElementById("button-area");
@@ -156,7 +158,7 @@ html,body{
         setTimeout(type, 45);
       } else {
         // --- 🟢 修改處：打字一結束，立刻顯示 QR Code 區 ---
-        generateQR();               // 1. 生成 QR Code
+       // generateQR();      //         // 1. 生成 QR Code
         btnArea.style.opacity = "1"; // 2. 讓按鈕與 QR 區顯現 (淡入動畫)
         
         // --- 啟動進度條 (維持背景執行或單純顯示進度) ---
@@ -178,21 +180,37 @@ html,body{
     });
   });
 
-  // 生成 QR Code 函式
   function generateQR() {
-    const myLocalIP = "172.20.10.5"; 
-    const downloadUrl = `http://${myLocalIP}:5501/download.html`; 
+    // 1. 🟢 關鍵：從 localStorage 取得剛才在 final.html 產生的專屬 ID
+    // 這樣掃描後，download.html 才知道要「過濾」哪幾張照片
+    const userId = localStorage.getItem("current_user_id") || "default";
+
+    // 2. 設定為你電腦在區網的 IP
+    const myLocalIP = "192.168.0.102"; // 👈 請確保這行是你目前的正確 IP
+    
+    // 3. ✨ 核心修改：在網址後面加上 ?id=... 參數
+    const downloadUrl = `http://${myLocalIP}:5501/download.html?id=${userId}`; 
+    
     const qrcodeContainer = document.getElementById("qrcode");
-    if (qrcodeContainer && qrcodeContainer.innerHTML === "") {
+    
+    if (qrcodeContainer) {
+        // 清空原本的，避免掃到舊的或疊在一起
+        qrcodeContainer.innerHTML = ""; 
+        
         new QRCode(qrcodeContainer, {
-            text: downloadUrl,
+            text: downloadUrl,  // 這裡已經變成帶 ID 的網址了
             width: 150,
             height: 150,
             colorDark: "#ffffff",
-            colorLight: "rgba(0,0,0,0)"
+            colorLight: "#000000",
+            correctLevel: QRCode.CorrectLevel.H
         });
+        console.log("QR Code 生成成功，專屬連結: " + downloadUrl);
     }
-  }
+}
+
+
+  
 
   function showLoadingText(text){
     const el = document.getElementById("loading-text");
@@ -216,9 +234,24 @@ html,body{
   }
 
  function finish() {
-    console.log("清理暫存資料中...");
-    localStorage.clear(); // 🔴 執行這行後，所有照片都會從筆電消失
-    window.location.href = "index.html";
+    console.log("👋 體驗結束，啟動 5 分鐘照片刪除倒數...");
+    
+    // 🟢 1. 通知 Java 伺服器：編號歸零，並在 5 分鐘後刪除這輪的照片
+    fetch('http://localhost:8080/clear')
+    .then(response => {
+        console.log("✅ Java 伺服器已排定清理任務");
+    })
+    .catch(err => {
+        console.warn("⚠️ 無法連線至 Java 伺服器，但將繼續跳轉", err);
+    });
+
+    // 🟢 2. 清除瀏覽器本地紀錄 (LocalStorage)
+    localStorage.clear(); 
+    
+    // 🟢 3. 跳轉回首頁
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 300); // 稍微延遲 0.3 秒，確保 fetch 指令有發射出去
   }
 </script>
 </body>

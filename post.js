@@ -1,21 +1,17 @@
 // ===============================
-// 模範生 IG 貼文頁 post.js
+// 模範生 IG 貼文頁 post.js - 終極穩定版
 // ===============================
-
 // DOM
 const postImage     = document.getElementById("postImage");
 const likeBtn       = document.getElementById("likeBtn");
 const likesCount    = document.getElementById("likesCount");
-const commentInput = document.getElementById("commentInput"); 
+const commentInput  = document.getElementById("commentInput"); 
 const commentsList  = document.getElementById("commentsList");
 
 // -------------------------------
 // 讀取上一頁資料
 // -------------------------------
-const finalScore = localStorage.getItem("finalScore") || 0;
 const photoData = localStorage.getItem("capturedImage");
-
-// 修正：賦值邏輯留一組即可
 if (photoData) {
   postImage.src = photoData;
 } else {
@@ -27,7 +23,6 @@ if (photoData) {
 // -------------------------------
 let liked = false;
 let likes = Math.floor(Math.random() * 100) + 20;
-
 likesCount.innerText = `${likes} likes`;
 
 likeBtn.addEventListener("click", () => {
@@ -38,111 +33,132 @@ likeBtn.addEventListener("click", () => {
 });
 
 // -------------------------------
-// 🟢 留言功能 (訊息流漂浮版) - 替換原本的爆炸版
+// 🟢 留言功能
 // -------------------------------
-
-// 監聽 Enter 鍵
 commentInput.addEventListener("keydown", e => {
   if (e.key === "Enter" && commentInput.value.trim() !== "") {
-    createFloatingComment(commentInput.value); // 呼叫新函式
+    createFloatingComment(commentInput.value);
     commentInput.value = "";
   }
 });
 
-// 產生漂浮訊息的函式
 function createFloatingComment(text) {
   if (!commentsList) return;
-
   const el = document.createElement("div");
-  el.className = "floating-comment"; // 對應 CSS 的新 Class
-  
-  el.innerHTML = `
-    <img src="image/text2.png" /> 
-    <span><strong>USER</strong> ${text}</span>
-  `;
-
-  // 加入容器，CSS 的 flex-direction: column-reverse 會自動由下而上堆疊
+  el.className = "floating-comment";
+  el.innerHTML = `<img src="image/text2.png" /><span><strong>USER</strong> ${text}</span>`;
   commentsList.appendChild(el);
-
-  // 4 秒後自動移除元素，保持頁面效能，確保截圖時不會過重
-  setTimeout(() => {
-    el.remove();
-  }, 4000);
+  setTimeout(() => { el.remove(); }, 4000);
 }
 
-// 🟢 額外加碼：自動噴出讚美留言 (讓畫面不冷清)
-const autoComments = ["這也太精緻了吧！", "模範生實至名歸 ✨", "跪求教學 😍", "質感好棒！", "這個濾鏡太強了...", "美到窒息！"];
+// -------------------------------
+// 🟢 圖片隨機噴發
+// -------------------------------
+const floatContainer = document.getElementById("floating-images-container");
+const pngSources = ["image/mess1.png","image/mess2.png","image/mess3.png","image/mess4.png","image/mess5.png","image/mess6.png","image/mess7.png","image/mess8.png"];
 
-function startAutoComments() {
-  const autoInterval = setInterval(() => {
-    // 當倒數剩下 3 秒（準備截圖）時停止產生，避免干擾畫面穩定
-    if (typeof timeLeft !== 'undefined' && timeLeft <= 3) {
-        clearInterval(autoInterval);
-        return;
-    }
-    const randomText = autoComments[Math.floor(Math.random() * autoComments.length)];
-    createFloatingComment(randomText);
-  }, 1500); // 每 1.5 秒自動噴出一則
+function spawnFloatingImage() {
+  if (!floatContainer) return;
+  const img = document.createElement("img");
+  img.src = pngSources[Math.floor(Math.random() * pngSources.length)];
+  img.className = "floating-png";
+  const randomLeft = Math.floor(Math.random() * 90) + 5;
+  const duration = Math.random() * 2 + 2; 
+  const size = Math.floor(Math.random() * 800) + 800; 
+  img.style.left = `${randomLeft}vw`;
+  img.style.animationDuration = `${duration}s`;
+  img.style.width = `${size}px`;
+  floatContainer.appendChild(img);
+  setTimeout(() => { img.remove(); }, duration * 1000);
 }
 
-// 啟動自動留言
-startAutoComments();
-
-
-// ===============================
-// 1. 螢幕適配預覽
-// ===============================
+// -------------------------------
+// 螢幕適配
+// -------------------------------
 function autoResize() {
     const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920) * 0.95;
     const scaler = document.getElementById('preview-scaler');
-    if (scaler) {
-        scaler.style.setProperty('--js-scale', s);
-    }
+    if (scaler) scaler.style.setProperty('--js-scale', s);
 }
 window.addEventListener('resize', autoResize);
 autoResize();
 
-
 // ===============================
-// 3. 截圖、存檔與自動跳轉 (step6.html)
+// 🚀 關鍵：自動截圖、存檔（不列印）並跳轉
 // ===============================
 
 async function autoCaptureAndRedirect() {
-    const target = document.querySelector(".ig-phone"); 
-    if (!target) return;
+    // 1. 立即上鎖，一輩子只能進來一次
+    if (window.isFinalStepDone) return;
+    window.isFinalStepDone = true;
+
+    // 2. 徹底殺死所有的計時器，防止重複觸發
+    if (window.imageInterval) clearInterval(window.imageInterval);
+    if (window.countdownTimer) clearInterval(window.countdownTimer);
+
+    console.log(`📸 執行最終存檔程序... 固定 ID: photo4`);
+    
+    const target = document.getElementById("preview-scaler") || document.body;
 
     try {
         const canvas = await html2canvas(target, {
             useCORS: true,
             backgroundColor: "#000",
-            width: window.innerWidth,
-            height: window.innerHeight,
-            scale: 1,
-            x: 0,
-            y: 0,
-            scrollX: 0,
-            scrollY: 0,
+            scale: 1.5, 
+            logging: false
         });
 
         const screenshot = canvas.toDataURL("image/jpeg", 0.7);
+        // 存入 localStorage 當備份
         localStorage.setItem("photo_04", screenshot);
         
-        setTimeout(() => {
-            window.location.href = "step6.html"; 
-        }, 1500);
+        console.log(`📡 背景發送 Photo 4 至 Java...`);
+        
+        // 發送至 Java 伺服器，不帶 time 參數
+        fetch(`http://localhost:8080/print?doPrint=false&id=photo4`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: screenshot })
+        })
+        .then(() => {
+            console.log(`✅ photo4.jpg 已發送存檔`);
+            // 延遲 300ms 確保 Java 寫入檔案後再跳轉
+            setTimeout(() => {
+                window.location.replace("step6.html");
+            }, 300);
+        })
+        .catch((err) => {
+            console.error("發送失敗:", err);
+            window.location.replace("step6.html");
+        });
+
     } catch (err) {
         console.error("截圖失敗:", err);
+        window.location.replace("step6.html");
     }
-}
+} // 🟢 確保這裡有閉合大括號
+// -------------------------------
+// 啟動圖片噴發
+// -------------------------------
+window.imageInterval = setInterval(() => {
+    if (typeof timeLeft !== 'undefined' && timeLeft <= 2) {
+        clearInterval(window.imageInterval);
+        return;
+    }
+    spawnFloatingImage();
+}, 300);
 
-// 10 秒倒數計時
+// -------------------------------
+// 10 秒倒數與觸發
+// -------------------------------
 let timeLeft = 10; 
-
-const timer = setInterval(() => {
+window.countdownTimer = setInterval(() => {
     timeLeft--;
+    console.log("⏱️ 倒數:", timeLeft);
 
-    if (timeLeft === 2) {
-        clearInterval(timer); 
+    if (timeLeft <= 2) {
+        // 時間一到，先清除計時器再執行
+        clearInterval(window.countdownTimer); 
         autoCaptureAndRedirect(); 
     }
 }, 1000);

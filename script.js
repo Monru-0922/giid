@@ -1,4 +1,3 @@
-
 // ----------------------------------
 // 全域狀態
 // ----------------------------------
@@ -422,11 +421,26 @@ function showPreRatingTypewriter() {
     }
 
     setTimeout(async () => {
-        // 🎲 1. 隨機選底圖
+   // 🎲 1. 隨機選底圖（加入防重複邏輯）
         const scoreOptions = ["image/score-01.jpg", "image/score-02.jpg", "image/score-03.jpg"];
-        const selectedBG = scoreOptions[Math.floor(Math.random() * scoreOptions.length)];
+        
+        // 從瀏覽器紀錄中取得「上一次」顯示的圖片路徑
+        const lastBG = localStorage.getItem("last_score_bg");
+        let selectedBG;
+
+        // 使用 do...while 迴圈：如果抽到的跟上次一樣，就重新抽一次
+        do {
+            selectedBG = scoreOptions[Math.floor(Math.random() * scoreOptions.length)];
+        } while (selectedBG === lastBG);
+
+        // 記住這一次的結果，供下一次比對
+        localStorage.setItem("last_score_bg", selectedBG);
+
         const ratingBgEl = document.getElementById("rating-bg");
-        if (ratingBgEl) ratingBgEl.src = selectedBG;
+        if (ratingBgEl) {
+            ratingBgEl.src = selectedBG;
+            console.log("🎲 隨機選中（已過濾重複）:", selectedBG);
+        }
 
         // 🎬 2. 顯示容器
         const ratingOverlay = document.getElementById('rating-overlay');

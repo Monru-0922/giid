@@ -6,7 +6,7 @@
     <title>列印選擇 - 質感流動邊框版</title>
     <script src="qrcode.min.js"></script>
     <style>
-    /* 1. 基礎佈局：確保電視全屏不捲動 */
+
 /* ================================================= */
 /* 1. 全域佈局與背景 (Body & Global Layout) */
 /* ================================================= */
@@ -122,12 +122,12 @@ p.desc {
 
 /* 內部照片設定 */
 .photo { 
-    width: 90%;
+    width: 80%;
     height: auto;
     max-height: 80%;
     object-fit: contain; 
     position: absolute; 
-    top: 45%;
+    top: 43%;
     left: 50%; 
     transform: translate(-50%, -50%);
     z-index: 3;
@@ -175,13 +175,14 @@ p.desc {
 /* 項目標籤 */
 .item-label { 
     position: absolute; 
-    bottom: 12px; 
+    bottom: 30px; 
     width: 100%; 
     left: 0; 
-    font-size: 1.4vh; 
+    font-size: 0.6vh; 
     font-weight: 300; 
     z-index: 5; 
-    letter-spacing: 2px; 
+    letter-spacing: 2px;
+    color:#000
 }
 
 /* ================================================= */
@@ -199,7 +200,7 @@ p.desc {
 .btn-section { 
     display: flex; 
     flex-direction: row; 
-    gap: 20px; 
+    gap: 40px; 
     flex: 1;
     width: 100%;
 }
@@ -231,46 +232,95 @@ p.desc {
 /* 4. 列印設定 (Print Styles) */
 /* ================================================= */
 @media print {
-    /* 1. 隱藏不必要的介面 */
-    h1, p.desc, .btn-section, .bottom-area, .ig-page-bg {
-        display: none !important;
+    /* 1. 強制瀏覽器渲染色彩與背景圖 */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    
     }
 
-    /* 2. 僅顯示選中的照片 */
-    .item:not(.selected) {
-        display: none !important;
+    /* 2. 定義紙張與邊距 (4x6 吋或自動) */
+    @page {
+        size: 4in 6in; /* 若固定 4x6 可設為 4in 6in */
+        margin: 0mm; /* 消除邊距 */
     }
 
-    /* 3. 隱藏裝飾元件 */
-    .checkbox, .item::before, .item::after {
-        display: none !important;
-    }
+    /* 3. 隱藏不需要的元件 */
+ h1, p.desc, .bottom-area, .ig-page-bg, .checkbox {
+    display: none !important;
+}
 
-    /* 4. 黑白/省墨設定 */
-    body { 
-        background: #fff !important; 
-        color: #000 !important;
-    }
-
-    /* 5. 調整版面置中 */
-    #viewport {
-        transform: none !important;
-        position: static !important;
-        width: 100% !important;
-        height: auto !important;
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 4in !important;
+        height: 6in !important;
+        background-color: #000000 !important;
+        display: block !important;
+        overflow: visible !important;
     }
 
     .grid {
-        display: flex !important;
-        justify-content: center !important;
-        gap: 20px !important;
-        margin: 0 auto !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .item {
+        display: none !important;
+    }
+    .item.selected {
+        display: block !important;
+        width: 4in !important;
+        height: 6in !important;
+        position: fixed !important; /* 改用 fixed 確保鎖定在頁面起始點 */
+        top: 0 !important;
+        left: 0 !important;
+        border: none !important;
+        background-color: #000 !important;
+        page-break-after: always !important;
+        z-index: 9999 !important;
     }
 
-    .item.selected {
-        border: none !important; 
-        background: transparent !important;
+    .frame-overlay {
+        display: block !important;
+        width: 4in !important;
+        height: 6in !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 20 !important;
+        /* 將圖片路徑直接放入 content，這會讓它被視為普通圖片而非背景 */
+        content: url('image/frame3.png') !important; 
+        object-fit: fill
     }
+    .photo {
+        display: block !important;
+        /* 您可以調整下方的寬度百分比來控制照片大小 */
+        width: 100% !important; 
+        height: 100% !important;
+        max-height: 80% !important;
+        
+        /* 絕對置中設定 */
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none!important;
+        
+        object-fit: contain !important;
+        z-index: 10 !important; /* 照片在相框下面 */
+        background-color: #000 !important;
+    }
+    .item-label { 
+     position: absolute; 
+     bottom: 30px; 
+     width: 100%; 
+     left: 0; 
+     font-size: 0.6vh; 
+     font-weight: 300; 
+     z-index: 5; 
+     letter-spacing: 2px;
+     color:#000
+   }
 }
 </style>
 </head>
@@ -278,7 +328,7 @@ p.desc {
 
 <img id="post-bg" class="ig-page-bg" src="image/final-bg.png">
 <h1>MODEL1_請選擇照片</h1>
-<p class="desc">點擊下載 即可領取數位照片</p>
+<p class="desc">使用滑鼠選擇列印照片</p>
 <div class="grid">
     <div class="item" onclick="toggle(this)" data-id="score">
         <img id="img-score" class="photo" src="image/05.png">
@@ -302,7 +352,7 @@ p.desc {
         <img id="img-post" class="photo" src="image/05.png">
         <div class="frame-overlay"></div>
         <div class="checkbox"></div>
-        <div class="item-label">04_社群貼文介面</div>
+        <div class="item-label">04_社群貼文</div>
     </div>
 </div>
 
@@ -311,117 +361,104 @@ p.desc {
         <button id="printBtn" onclick="doPrint()">
          <span>列印紙本</span> 
         </button>
+        <!--
         <button id="downloadBtn" onclick="doDownload()">
-            <span>下載照片</span> 
+            <span>下載數位照片</span> 
         </button>
+        -->
 
     </div>
 </div>
 
 <script>
-    window.onload = () => {
-        // 1. 載入照片預覽
-       const photoMapping = {
-        'score': 'photo_01', // 評分表
-        'makeup': 'photo_02', // 美妝
-        'text': 'photo_03',  // 文字
-        'post': 'photo_04'   // 社群
-    };;
-    Object.keys(photoMapping).forEach(key => {
-        const data = localStorage.getItem(photoMapping[key]);
-        const imgEl = document.getElementById('img-' + key);
-        if (imgEl && data) {
-            imgEl.src = data;
-            console.log(`✅ 成功載入 ${key} 照片`);
-        } else {
-            console.warn(`❌ 找不到 ${key} 的存檔 (${photoMapping[key]})`);
-        }
-    });
-
-
+window.onload = () => {
+        const photoMapping = {
+            'score': 'photo_01', 
+            'makeup': 'photo_02', 
+            'text': 'photo_03',  
+            'post': 'photo_04'   
+        };
+        Object.keys(photoMapping).forEach(key => {
+            const data = localStorage.getItem(photoMapping[key]);
+            const imgEl = document.getElementById('img-' + key);
+            if (imgEl && data) {
+                imgEl.src = data;
+            }
+        });
     };
 
     function toggle(el) {
         el.classList.toggle('selected');
     }
 
-    // 修正過的合成函數：完整顯示 9:16 在 4:6 畫布上 (不切割)
-    async function compositeImage(imgElement) {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // 4x6 標準解析度
-            canvas.width = 1200; 
-            canvas.height = 1800;
+    /**
+     * 🟢 執行「列印紙本」
+     * 功能：僅觸發瀏覽器列印視窗（或靜默列印），完成後跳轉。
+     */
+    function doPrint() {
+        const selectedItems = document.querySelectorAll('.item.selected');
+        if (selectedItems.length === 0) {
+            alert("請至少選擇一張照片進行列印！");
+            return;
+        }
 
-            // 讀取框
-            const frameImg = new Image();
-            frameImg.src = 'image/frame3.png'; 
-            frameImg.onload = () => {
-             // 背景填白
-             ctx.fillStyle = "#ffffff";
-             ctx.fillRect(0, 0, canvas.width, canvas.height);
+        console.log("正在開啟列印預覽...");
 
-                // ✨ 調整縮放比例：讓圖片只佔畫布高度的 9% (預留上下安全區)
-            const safeScale = 0.90; 
-            const targetHeight = canvas.height * safeScale;
-            const targetWidth = (targetHeight * 9) / 16; 
+        // 1. 觸發瀏覽器列印預覽
+        // 程式會在此處暫停，直到使用者關閉預覽視窗
+        window.print(); 
 
-            // ✨ 計算置中座標
-            const offsetLeft = (canvas.width - targetWidth) / 2;
-            const offsetTop = (canvas.height - targetHeight) / 2;
+        // 2. 自動跳轉邏輯
+        // 當使用者按下「列印」或「取消」關閉預覽後，以下程式碼會立即執行
+        localStorage.setItem("need_print", "false"); 
+        
+        // 建議給予極短的延遲（200ms），確保瀏覽器已從列印狀態中完全恢復再跳轉
+        setTimeout(() => {
+            window.location.href = "ending.html"; 
+        }, 200); 
+    }
+    
 
-            // 畫照片 (放在安全區域內)
-            ctx.drawImage(imgElement, offsetLeft, offsetTop, targetWidth, targetHeight);
-            
-            // 畫框 (跟著照片一起縮小置中)
-            ctx.drawImage(frameImg, offsetLeft, offsetTop, targetWidth, targetHeight);
-            
-            resolve(canvas.toDataURL('image/jpeg', 0.95));
-            };
+    /**
+     * 🔵 執行「下載照片」
+     * 功能：僅將照片 Base64 資料傳送至 Java 伺服器存檔，不執行列印，完成後跳轉。
+     */
+    async function doDownload() {
+        const selectedItems = document.querySelectorAll('.item.selected');
+        if (selectedItems.length === 0) {
+            alert("請至少選擇一張照片！");
+            return;
+        }
+
+        const now = new Date();
+        const userId = `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`; 
+        localStorage.setItem("current_user_id", userId);
+
+        // 使用 Promise.all 併行處理上傳，速度會比 for 迴圈更快且穩定
+        const uploadPromises = Array.from(selectedItems).map(async (item) => {
+            const imgEl = item.querySelector('.photo');
+            try {
+                // 注意：若你的 Java 伺服器路徑 /print 內建了自動列印邏輯，
+                // 請聯繫後端開發者提供另一個僅供「存檔」的 API 路徑（例如 /save）。
+                const javaServer = `http://localhost:8080/print?id=${userId}`;
+                await fetch(javaServer, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: imgEl.src 
+                });
+                console.log(`✅ ${item.getAttribute('data-id')} 上傳成功`);
+            } catch (err) {
+                console.error("❌ 無法連線至 Java 伺服器", err);
+            }
         });
+
+        // 等待所有照片處理完畢（不論成功或失敗）
+        await Promise.all(uploadPromises);
+
+        // 確保列印標記為 false，並執行跳轉
+        localStorage.setItem("need_print", "false");
+        window.location.href = "ending.html"; 
     }
-// 定義列印按鈕的功能
-// 🟢 執行「下載照片」按鈕的功能
-async function doDownload() {
-    const selectedItems = document.querySelectorAll('.item.selected');
-    
-    if (selectedItems.length === 0) {
-        alert("請至少選擇一張照片！");
-        return;
-    }
-
-    console.log("準備處理下載存檔...");
-    
-    // 告知下一頁（ending.html）：「不要」啟動自動列印
-    localStorage.setItem("need_print", "false");
-    
-    // 如果這裡有需要執行照片合成 (compositeImage)，可以加在這裡
-    // 執行完後跳轉
-    window.location.href = "ending.html"; 
-}
-
-// 🟢 執行「列印紙本」按鈕的功能 (整合後的版本)
-function doPrint() {
-    const selectedItems = document.querySelectorAll('.item.selected');
-    
-    if (selectedItems.length === 0) {
-        alert("請至少選擇一張照片進行列印！");
-        return;
-    }
-
-    // 🟢 1. 直接在這裡觸發列印
-    // 注意：如果是 Mac 終端機模式，這裡會直接出紙
-    window.print(); 
-
-    // 🟢 2. 告訴 Ending 頁面「不需要再印了」
-    localStorage.setItem("need_print", "false"); 
-
-    // 🟢 3. 跳轉到 Ending 頁面讓使用者掃描下載
-    window.location.href = "ending.html"; 
-}
-
 </script>
 
 </body>

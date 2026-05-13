@@ -151,143 +151,95 @@ html,body{
   <div id="type-text"></div>
 </div>
 <script>
-  /* ======================
-     9:16 SCALE
-  ====================== */
-  function resize(){
-    const s = Math.min(
-      window.innerWidth / 1080,
-      window.innerHeight / 1920
-    );
-    document.documentElement.style.setProperty("--scale-factor", s);
+/* ======================
+   9:16 SCALE
+====================== */
+function resize(){
+  const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+  document.documentElement.style.setProperty("--scale-factor", s);
+}
+resize();
+window.addEventListener("resize", resize);
+
+/* ======================
+   DOM
+===================== */
+const viewport = document.getElementById("viewport");
+
+/* ======================
+   打字機動畫
+====================== */
+const TEXT = `
+> 快看看現在的你
+真是太漂亮了！！！
+
+不過我覺得這不是你的極限
+還能更好看！更好看！
+
+％＊＄＃＠故障％＊＄＃＠
+％＊＄＃＠％＊＄＃＠系統已故障％＊＄＃＠
+
+>model 1 進入抽象審美區
+>model 1 離模範美只差一步了
+`;
+
+const el = document.getElementById("type-text");
+let charIndex = 0;
+(function type(){
+  if(charIndex <= TEXT.length){
+    el.textContent = TEXT.slice(0, charIndex++);
+    setTimeout(type, 45);
   }
-  resize();
-  window.addEventListener("resize", resize);
-  
-  
-  /* ======================
-     DOM
-  ====================== */
-  const viewport = document.getElementById("viewport");
-  const endingVideo = document.getElementById("ending-video");
-  
-  
-  /* ======================
-     打字機
-  ====================== */
-  const TEXT = `
-  > 快看看現在的你
-  真是太漂亮了！！！
-  
-  不過我覺得這不是你的極限
-  還能更好看！更好看！
-  
-  ％＊＄＃＠故障％＊＄＃＠
-  ％＊＄＃＠％＊＄＃＠系統已故障％＊＄＃＠
-  
-  >model 1 進入抽象審美區
-  >model 1 離模範美只差一步了
-  `;
-  
-  const el = document.getElementById("type-text");
-  let i = 0;
-  (function type(){
-    if(i <= TEXT.length){
-      el.textContent = TEXT.slice(0,i++);
-      setTimeout(type, 45);
-    }
-  })();
-  
-  
-  /* ======================
-     BGM（本頁播放）
-  ====================== */
-  const bgm = new Audio("makeup_music.mp3");
-  bgm.loop = false;
-  bgm.volume = 0.6;
-  
-  window.addEventListener("load", () => {
-    bgm.play().catch(err=>{
-      console.log("BGM failed:", err);
-    });
-  });
-  
-  // 記錄時間給下一頁
-  setInterval(() => {
-    if (!bgm.paused) {
-      localStorage.setItem("bgmTime", bgm.currentTime);
-    }
-  }, 500);
-  
-  
-  /* ======================
-     上一頁拍攝畫面
-  ====================== */
-  const shot = localStorage.getItem("capturedImage") || localStorage.getItem("photo_02");
-  if (shot) {
-    document.getElementById("final-shot").src = shot;
+})();
+
+/* ======================
+   BGM 處理
+====================== */
+const bgm = new Audio("makeup_music.mp3");
+bgm.loop = false;
+bgm.volume = 0.6;
+
+window.addEventListener("load", () => {
+  bgm.play().catch(err => console.log("BGM play error:", err));
+});
+
+// 持續更新時間給下一頁
+setInterval(() => {
+  if (!bgm.paused) {
+    localStorage.setItem("bgmTime", bgm.currentTime);
   }
-  
-  
-  /* ======================
-     系統死機 / 關機時間軸
-  ====================== */
-  // 20 秒：開始 glitch
-  setTimeout(() => {
-    viewport.classList.add("glitch");
-  }, 3000);
-  
-  // 27 秒：關機
-  setTimeout(() => {
-    viewport.classList.remove("glitch");
-    viewport.classList.add("shutdown");
-  }, 8000);
-  
-  
-  /* ======================
-     30 秒：停音樂 → 播動畫
-  ====================== */
-  setTimeout(() => {
-  bgm.pause();
-  location.href = "text.html";
-}, 10000);
+}, 500);
 
-async function captureAndGo() {
-    console.log("📸 準備全畫面截圖...");
-    
-    // 1. 抓取妳的手機容器 (確認 ID 是 viewport 或是妳手機框的 ID)
-    const target = document.getElementById("viewport"); 
-    
-    try {
-        // 2. 執行截圖
-        const canvas = await html2canvas(target, {
-            width: 1080,
-            height: 1920,
-            scale: 1, // 1:1 截取，不要縮放
-            useCORS: true,
-            backgroundColor: "#000"
-        });
-
-        const finalImage = canvas.toDataURL("image/jpeg", 0.8);
-
-        // 3. 💾 存入 localStorage (一次滿足 final 頁面的圖二跟圖三)
-        localStorage.setItem("photo_02", finalImage); 
-        localStorage.setItem("photo_03", finalImage); 
-        
-        console.log("✅ 截圖存檔成功！");
-    } catch (err) {
-        console.error("截圖出錯:", err);
-    }
-
-    // 4. 停音樂並跳轉
-    if (typeof bgm !== 'undefined') bgm.pause();
-    window.location.href = "text.html";
+/* ======================
+   顯示上一頁（美妝）的照片
+====================== */
+// 這裡確保讀取到的是無畫框的版本
+const shot = localStorage.getItem("capturedImage");
+if (shot) {
+  document.getElementById("final-shot").src = shot;
 }
 
-/* ==========================================
-   ⏳ 統一在 10 秒（或妳想要的時間）執行
-========================================== */
-setTimeout(captureAndGo, 10000);
+/* ======================
+   系統死機 / 關機 / 跳轉 時間軸
+====================== */
+// 3秒後：開始抖動 (Glitch)
+setTimeout(() => {
+  viewport.classList.add("glitch");
+}, 3000);
+
+// 8秒後：停止抖動並執行關機動畫 (Shutdown)
+setTimeout(() => {
+  viewport.classList.remove("glitch");
+  viewport.classList.add("shutdown");
+}, 8000);
+
+// 10秒後：停止音樂並直接跳轉，不執行截圖
+setTimeout(() => {
+  bgm.pause();
+  console.log("🚀 不截圖，直接進入文字濾鏡頁面");
+  window.location.href = "text.html";
+}, 10000);
+
 </script>
   
 

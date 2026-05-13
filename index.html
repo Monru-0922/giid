@@ -9,7 +9,7 @@
  <script src="aframe.min.js"></script>
  <script src="mindar-face-aframe.prod.js"></script> 
  <!-- 🟢 必須加入這行，程式才能執行截圖功能 -->
- <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+ <script src="html2canvas.min.js"></script>
 
   <!-- MediaPipe（臉 + 手） -->
  <script src="camera_utils.js"></script>
@@ -155,7 +155,7 @@
                 <img src="./image/start.jpg" alt="點擊開始體驗">
                 
                 <div class="overlay-box">
-                    <span>按下桌上白色按鍵，開始體驗</span>
+                    <span>按下桌上黑色按鍵，開始體驗</span>
                 </div>
             </div>
 
@@ -174,13 +174,13 @@
     <!-- ===============================
          AR Scene（MindAR）
     =============================== -->
-    <a-scene
-      id="ar-scene"
-      mindar-face="uiLoading:no; uiScanning:no; disableFaceMesh:true;"
-      vr-mode-ui="enabled:false"
-      renderer="colorManagement:true">
-      <a-camera active="false"></a-camera>
-    </a-scene>
+  <a-scene
+  id="ar-scene"
+  mindar-face="uiLoading: no; uiScanning: no;"
+  vr-mode-ui="enabled: false"
+  renderer="colorManagement: true">
+  <a-camera active="false"></a-camera>
+</a-scene>
 <!-- ===============================
      01 文字敘事畫面（打字機）
 =============================== -->

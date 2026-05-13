@@ -309,3 +309,57 @@ html, body {
   object-fit: cover;
   pointer-events: none;
 }
+/* 移除原本背景動畫的定義 (bg-move, bg-opacity) 以節省效能 */
+.ig-page-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* 🟢 補上 vh */
+  z-index: 2;
+  opacity: 0.3; /* 調低一點讓爆炸評論更明顯 */
+  object-fit: cover;
+  pointer-events: none;
+}
+/* 漂浮圖片的總容器 */
+#floating-images-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none; /* 讓滑鼠點擊可以穿透，不影響按鈕操作 */
+  z-index: 999;         /* 層級在背景之上，但在手機框之下，依需求調整 */
+  overflow: hidden;
+}
+
+/* 單張漂浮圖片的樣式 */
+/* 漂浮圖片樣式 */
+.floating-png {
+  position: absolute;
+  bottom: -150px; 
+  width: 800px;
+  height: auto;
+  will-change: transform, opacity;
+  /* 🟢 將 ease-in-out 改為 linear 或更輕快的貝茲曲線，速度感會更明顯 */
+  animation: jellyFloatUp 10s linear forwards;
+}
+
+@keyframes jellyFloatUp {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1, 1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translate3d(0, -10vh, 0) scale(1.1, 0.9);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    /* 🟢 稍微增加向上飄的距離，確保完全消失 */
+    transform: translate3d(0, -130vh, 0) scale(1, 1);
+    opacity: 0;
+  }
+}

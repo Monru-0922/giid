@@ -54,14 +54,12 @@ html,body{
 /* 🟢 修改後的提示區樣式（保留原本的按鈕外觀） */
 #button-area {
   position: absolute;
-  bottom: 250px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  width: 70%;
-  opacity: 0; 
-  transition: opacity 1s;
+  inset: 0; /* 撐滿整個 1080x1920 區域 */
+  width: 100%;
+  height: 100%;
+  z-index: 10; /* 確保在最上層 */
+  cursor: pointer;
+  display: none; /* 預設不顯示，打完字再開啟 */
 }
 
 .action-info {
@@ -95,7 +93,7 @@ html,body{
   <div id="type-text"></div>
 
   <div id="button-area">
-    <div class="action-info">按下 白色按鍵 進入變美程序</div>
+    <div class="action-info">按下 黑色按鍵 進入變美程序</div>
   </div>
 
 </div>
@@ -126,35 +124,62 @@ html,body{
    
    想看看升級後的自己嗎？ 
    
-   請點擊按鍵確認您的下一步：
-    `;
+   按下［黑色按鍵］＿進入變美程序
+    `.trim();
     
     const el = document.getElementById("type-text");
     const btnArea = document.getElementById("button-area");
     let i = 0;
     let canJump = false; // 鎖定狀態，打完字才能跳轉
 
-    (function type(){
+    function type(){
       if(i <= TEXT.length){
-        el.textContent = TEXT.slice(0,i++);
+        el.textContent = TEXT.slice(0, i++);
         setTimeout(type, 45);
       } else {
         btnArea.style.opacity = "1";
         canJump = true; 
+        console.log("✅ 打字完成，現在可以按 Enter 跳轉了");
       }
-    })();
+    }
+    type();
   
-    /* ======================
-       🟢 實體按鍵監聽 (Enter)
+   /* ======================
+       🟢 修正版：更強力的按鍵監聽
     ====================== */
-    window.addEventListener("keydown", (e) => {
-      if ((e.key === "Enter" || e.keyCode === 13) && canJump) {
-        canJump = false; // 防止重複觸發
-        location.href = 'step4.html';
+    const doNavigate = () => {
+      if (!canJump) {
+        console.log("⏳ 文字還沒打完");
+        return;
+      }
+      console.log("🚀 執行跳轉...");
+      canJump = false; // 防連點
+
+      // 嘗試多種跳轉方式，確保在 Live Server 環境也能跑
+      const target = 'step4.html';
+      window.location.href = target;
+
+      // 保險：如果 500ms 後還沒跳走，強行刷新路徑
+      setTimeout(() => {
+        window.location.replace(target);
+      }, 500);
+    };
+
+    // 1. 監聽全文件的鍵盤事件 (比 window 更穩定)
+    document.addEventListener("keydown", (e) => {
+      // 偵測 Enter (13) 或空白鍵 (32)，增加容錯
+      if (e.keyCode === 13 || e.key === "Enter" || e.keyCode === 32) {
+        doNavigate();
       }
     });
 
-  });
+    // 2. 針對實體按鈕的滑鼠點擊 (預留)
+    btnArea.addEventListener("click", doNavigate);
+
+    // 3. 強制視窗獲取焦點
+    window.focus();
+    document.body.addEventListener('click', () => window.focus()); // 點擊螢幕任何地方重新抓取焦點
+});
 </script>
   
 </body>
